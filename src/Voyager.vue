@@ -5,9 +5,9 @@
     :class="[smallSize ? 'app-is-small' : '', kiosk ? 'kiosk' : '']"
   >
     <webgl-test @webgl2-disabled="showWebGL2Warning = true" />
-    
+
     <!-- This contains the splash screen content -->
-     
+
     <SplashScreen
       v-model="showSplashScreen"
       :color="accentColor"
@@ -30,10 +30,12 @@
         <!-- This block contains the elements (e.g. icon buttons displayed at/near the top of the screen) -->
 
         <div v-show="!showSplashScreen" id="wwt-overlay">
-        
+
           <div id="top-content">
             <div id="left-buttons">
               <icon-button
+                class="sheet-toggle learn-more-button"
+                :model-value="showTextSheet && infoSheetTab === 'information'"
                 icon="book-open"
                 aria-label="Learn More"
                 :color="accentColor"
@@ -41,9 +43,11 @@
                 tooltip-text="Learn More"
                 tooltip-location="start"
                 size="lg"
-                @activate="() => openInfoSheetTab('information')"
+                @activate="() => toggleInfoSheetTab('information')"
               />
               <icon-button
+                class="sheet-toggle user-guide-button"
+                :model-value="showTextSheet && infoSheetTab === 'user-guide'"
                 icon="question"
                 aria-label="User guide"
                 :color="accentColor"
@@ -51,10 +55,11 @@
                 tooltip-text="User guide"
                 tooltip-location="start"
                 size="lg"
-                @activate="() => openInfoSheetTab('user-guide')"
+                @activate="() => toggleInfoSheetTab('user-guide')"
               />
               <icon-button
                 v-model="showTour"
+                class="sheet-toggle tour-button"
                 icon="signs-post"
                 aria-label="Show Tour"
                 :color="accentColor"
@@ -150,10 +155,6 @@
           </div>
 
           <div id="bottom-content">
-            <!-- Tab order lands here whether the tour is docked in the drawer right
-                 below or floating out of it, so focus order doesn't jump around when
-                 the layout switches between the two. -->
-            <div id="tour-floating-location" />
             <!-- play/pause + speed to the left of the timeline; below it on small screens (see CSS) -->
             <div id="timeline">
               <wwt-time-control
@@ -173,7 +174,7 @@
               />
             </div>
           </div>
-          
+
           <!-- credit logos $logo-credits.cds-bottom-credits -->
           <credit-logos
             v-if="!xs"
@@ -210,28 +211,34 @@
       :class="sidePanel ? 'drawer-side' : 'drawer-bottom'"
       :temporary="false"
     >
-      <!-- disable=true for non-floating tour -->
-      <!-- 
-      Teleporting to the "body" places it last in the DOM so last in the tab-focus order.
-      we actually want it pretty early, so instead of hacking a focus control, let's just put it where it belongs. 
-      This won't help the case where we are in the v-navigation-drawer though
-      -->
-      <Teleport 
-        to="#tour-floating-location" 
-        defer
-        :disabled="!floatingTour" 
+      <TourSheet
+        v-if="showTour"
+        v-focus-grab="showTour"
+        tabindex="-1"
+        :tour="tourSheetTour"
+        :small-size="false"
+        :accent-color="accentColor"
+        :border-color="borderColor"
+        show-next-on-last-step
+        :next-text="onLastStep ? 'Close' : 'Next'"
       >
-        <TourSheet
-          v-if="showTour"
-          v-focus-grab="showTour"
-          tabindex="-1"
-          :class="{'floating-tour': floatingTour}"
-          :tour="tour"
-          :small-size="false"
-        >
-          <template #default="{ step }">
-            <div class="selected-info-tour voyager-event">
+        <template #default="{ step }">
+          <div class="selected-info-tour voyager-event">
+            <!-- our own header rather than the toolkit's show-close, whose icon
+                 floats over the corner and so over the scrollbar. This row stays
+                 put and only the body below it scrolls. -->
+            <div class="voyager-event-header">
               <h3>{{ step.title }}</h3>
+              <v-btn
+                class="tour-close-button"
+                icon="mdi-close"
+                variant="text"
+                density="compact"
+                aria-label="Close tour"
+                @click="showTour = false"
+              />
+            </div>
+            <div class="voyager-event-body">
               <p class="event-date">{{ step.event.date.toISOString().replace("T", " ").slice(0, 16) }} UT</p>
               <img
                 :src="step.event.image"
@@ -251,9 +258,9 @@
                 {{ paragraph }}
               </p>
             </div>
-          </template>
-        </TourSheet>
-      </Teleport>
+          </div>
+        </template>
+      </TourSheet>
       <!--
         The Tabbed Sheet and TabPage are vue "tightly coupled" components
         This means a TabPage can only be used within an TabbedSheet.
@@ -262,7 +269,7 @@
         v-model:tab is the name of the currently selected tab. It comes from the title in kebab-case or the value if specified
         Each tab must havea unique value. If the sheet is closed and you want to show a specific tab, you must set
         the showTextSheet to true and set the infoSheetTab to the value of the tab you want to show.
-        
+
         Some available options are
         hide-tabs: (default: false) hide the tab bar, but keep space for the close button
         only-show-one: (default: false) only show the active tab, hide the others
@@ -272,7 +279,7 @@
         v-show="showTextSheet"
         id="side-panel-sheet"
         v-model:tab="infoSheetTab"
-        v-focus-toggle="showTextSheet"
+        v-focus-grab="showTextSheet"
         only-show-one
         align-tabs="start"
         @close="showTextSheet = false"
@@ -321,7 +328,7 @@
       </v-sheet>
       -->
     </v-navigation-drawer>
-    
+
     <!-- privacy setup -->
     <!-- <v-dialog
       id="data-collection-popup-dialog"
@@ -339,7 +346,7 @@
         v-model:response-opt-out="responseOptOut"
       />
     </v-dialog> -->
-    
+
     <v-dialog
       id="cds-privacy-policy"
       v-model="showPrivacyPolicyInfo"
@@ -370,8 +377,8 @@
       @opt-out="optOutRating"
       @what-is-this="showPrivacyPolicyInfo = true"
     />
-    
-    
+
+
 
     <v-slide-y-transition>
       <DataCollectionOptOutFooter
@@ -384,7 +391,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, shallowRef, computed, onMounted, watch } from "vue";
+import { ref, shallowRef, computed, onMounted, watch, nextTick } from "vue";
 import type { StyleValue } from "vue";
 import { WWTControl } from "@wwtelescope/engine";
 import { WWTComponent as WorldWideTelescope, engineStore } from "@wwtelescope/engine-pinia";
@@ -440,8 +447,12 @@ const showTextSheet = ref(false);
 const infoSheetTab = ref("");
 const showUserGuideSheet = ref(false);
 
-/** open a tab on the info sheet */
-function openInfoSheetTab(tabValue: string) {
+/** open a tab on the info sheet, or close the sheet if it's already showing that tab */
+function toggleInfoSheetTab(tabValue: string) {
+  if (showTextSheet.value && infoSheetTab.value === tabValue) {
+    showTextSheet.value = false;
+    return;
+  }
   infoSheetTab.value = tabValue;
   showTextSheet.value = true;
   // we don't want both open at the same time
@@ -450,7 +461,7 @@ function openInfoSheetTab(tabValue: string) {
 
 // styles //
 import { useAppLayout } from "./composables/useAppLayout";
-const { smallSize, sidePanel, floatingPanel: floatingTour, viewportWidth } = useAppLayout();
+const { smallSize, sidePanel, viewportWidth } = useAppLayout();
 const DRAWER_WIDTH_FRACTION = 34; // 34% of the viewport width
 const drawerWidth = computed(() => Math.round(viewportWidth.value * DRAWER_WIDTH_FRACTION / 100.));
 
@@ -461,6 +472,7 @@ const theme = useTheme();
 // can access them directly as `color="primary" on the prop, and they are aleady available in the CSS as --v-theme-primary and --v-theme-secondary
 const accentColor = computed(() => theme.current.value.colors.primary);
 const accentColor2 = computed(() => theme.current.value.colors.secondary);
+const borderColor = computed(() => theme.current.value.colors.primary);
 
 const { xs } = useDisplay();
 
@@ -545,7 +557,7 @@ const TRACK_ITEMS: { title: string; value: TrackTarget }[] = [
   { title: "Voyager 2", value: "voyager2" },
   ...SOLAR_SYSTEM_OBJECT_ITEMS,
 ];
-const trackingCenter = ref<TrackTarget>(SolarSystemObjects.saturn);
+const trackingCenter = ref<TrackTarget>("voyager1");
 const { follow: followTrajectory } = useFollowTrajectory(VOYAGER_FRAME);
 
 // WWT can only track objects; the spacecraft are followed by moving the camera ourselves
@@ -587,9 +599,9 @@ function createVoyagerOrbit() {
 }
 
 function createVoyagerLayer() {
-  createMovingMarkerLayer(store, "Voyager 2", VOYAGER_FRAME, VOYAGER_2_COLOR, voyager2PositionAt)
+  createMovingMarkerLayer(store, "Voyager 2", VOYAGER_FRAME, VOYAGER_2_COLOR, voyager2PositionAt, true)
     .then((layer) => (voyager2Layer.value = layer));
-  createMovingMarkerLayer(store, "Voyager 1", VOYAGER_FRAME, VOYAGER_1_COLOR, voyager1PositionAt).then(
+  createMovingMarkerLayer(store, "Voyager 1", VOYAGER_FRAME, VOYAGER_1_COLOR, voyager1PositionAt, true).then(
     (layer) => (voyager1Layer.value = layer),
   );
 }
@@ -779,9 +791,9 @@ const {
   optOut: optOutRating,
   updateUserExperienceInfo,
   initializePrompt,
-} = useUserExperienceRating(STORY_NAME, userID, { 
-  responseOptOut, 
-  timeout: 45_000, 
+} = useUserExperienceRating(STORY_NAME, userID, {
+  responseOptOut,
+  timeout: 45_000,
   questions: [
     "How do you like this app?",
   ],
@@ -828,6 +840,23 @@ const tour = useTour<TourStepContent>({
 });
 urlState.track("tour", tour.stepID);
 
+// On the last step the Next button becomes Close. TourSheet's Next calls
+// tour.next(), which in the toolkit is an unbounded stepIndex += 1, so the sheet
+// gets a copy of the tour whose next() closes it there instead of stepping past
+// the end. Same refs, so the step stays in sync with `tour`.
+const onLastStep = computed(() => tour.stepIndex.value === tour.length - 1);
+const tourSheetTour = {
+  ...tour,
+  next: async () => {
+    if (onLastStep.value) {
+      tourFinished = true;
+      showTour.value = false;
+    } else {
+      await tour.next();
+    }
+  },
+};
+
 // the step's slider: its event's window (it holds no other event), within the data
 const stepWindow = computed(() => {
   const { start, end } = eventWindow(VOYAGER_1_EVENTS, tour.stepIndex.value);
@@ -837,9 +866,16 @@ const stepWindow = computed(() => {
   };
 });
 
+// Set by the last step's Close, so the next Show Tour starts over at the first
+// step. The X keeps resuming where you left off. Not reset at close time,
+// since changing the step runs its setup and would move the clock and camera
+// back to launch as the tour closes.
+let tourFinished = false;
+
 function startTour() {
   showTour.value = true;
-  tour.goToStep(tour.stepIndex.value, true);
+  tour.goToStep(tourFinished ? 0 : tour.stepIndex.value, true);
+  tourFinished = false;
 }
 
 if (urlState.loadedFromUrl.value.includes("tour")) {
@@ -855,7 +891,7 @@ watch(showTour, (newVal) => {
 // using the navigation drawer layout for multiple things, means
 // it's a bit easier to have a computed combine the logic
 const drawerOpen = computed({
-  get: () => !showSplashScreen.value && (showTextSheet.value || showUserGuideSheet.value || (showTour.value && !floatingTour.value)),
+  get: () => !showSplashScreen.value && (showTextSheet.value || showUserGuideSheet.value || showTour.value),
   set: (open: boolean) => {
     if (!open) {
       showTextSheet.value = false;
@@ -868,6 +904,27 @@ const drawerOpen = computed({
 import { mutuallyExclusive } from "./composables/utils";
 // only one of the tour, text sheet, and user guide sheet can be open at a time
 mutuallyExclusive(showTour, showTextSheet, showUserGuideSheet);
+
+// When the drawer closes, focus goes back to the button for what it was showing.
+// Each content has exactly one opener, so the button follows from the content
+// and there's no need to record who opened it -- which v-focus-toggle does, and
+// gets wrong after a tab switch, since it only records on the first open.
+// Switching between contents leaves the drawer open, so the newly opened
+// content keeps the focus it grabs.
+// The buttons are found by class, not id: IconButton also copies an id onto its
+// tooltip, which duplicates it and points the button's aria-describedby at
+// itself. Its class lands on the tooltip too, hence `button.`.
+const drawerOpenerClass = computed(() => {
+  if (showTour.value) return "tour-button";
+  if (showTextSheet.value) return infoSheetTab.value === "user-guide" ? "user-guide-button" : "learn-more-button";
+  return null;
+});
+watch(drawerOpenerClass, (now, before) => {
+  if (now === null && before) {
+    // after the DOM update, so the closing content can't take focus back
+    nextTick(() => document.querySelector<HTMLElement>(`button.${before}`)?.focus());
+  }
+});
 
 
 function closeSplashScreen() {
@@ -945,7 +1002,7 @@ body {
   left: 0;
   bottom: 0;
   right: 0;
-  
+
   > canvas {
     display: block;
   }
@@ -1160,10 +1217,21 @@ body {
 }
 
 .voyager-event {
+  // A fixed-shape frame with the whole image fitted inside, rather than a
+  // full-width strip cropped to fill. The strip's shape followed the screen, and
+  // cropping a tall image like the Earth/Moon one to it left only the black gap
+  // between them. Almost every image is on a black sky, so the frame's black
+  // fill blends in.
+  // The width cap rather than a max-height is what keeps the frame 4:3: a
+  // max-height would leave the width at 100% and stretch the frame wide on
+  // short screens. 40vh wide at 4:3 is 30vh tall.
   img {
-    width: 100%;
-    max-height: 20vh;
-    object-fit: cover;
+    display: block;
+    width: min(100%, 40vh);
+    margin-inline: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: contain;
+    background: black;
     border-radius: 4px;
   }
 
@@ -1207,6 +1275,17 @@ body {
   border-width: 2px !important;
 }
 
+/* The drawer buttons' pressed state: filled gold with a purple icon, instead of
+   the toolkit's default of just turning the icon and border white. The id is
+   for specificity: it has to beat the toolkit's scoped .active and :focus
+   rules, and :focus would otherwise recolor the icon gold on the gold fill
+   right after a click. */
+#left-buttons .icon-wrapper.sheet-toggle.active {
+  background-color: rgb(var(--v-theme-primary));
+  border-color: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-secondary));
+}
+
 .icon-wrapper.tonal {
   // tonal style
   background-color: rgba(var(--v-theme-primary), 0.4) !important;
@@ -1228,7 +1307,7 @@ body {
 
 // Basic text styling for the TabbedSheet's content
 // it is better to set in the main app than to set things in the component
-// since the component may end up being imported from the toolkit. 
+// since the component may end up being imported from the toolkit.
 .cds-info-sheet .tab-page {
   h3 {
     color: steelblue;
@@ -1246,13 +1325,76 @@ body {
   padding: 0 1rem 1rem;
 }
 
-/* floats the tour: pulled out of the drawer (via Teleport) into #bottom-content's flex row, alongside e.g. the crossfade slider */
-.floating-tour.tour-text {
-  flex: 0 1 auto;
-  width: 30vw;
-  max-width: calc(100vw - 2rem);
+/* A fixed title row with a scrolling body under it. The toolkit's own scroll
+   area is turned into a plain flex column so that the scrolling happens one
+   level down, in .voyager-event-body, and the scrollbar starts below the title
+   and close button instead of running up beside them. */
+.tour-sheet .selected-info-scroll {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tour-sheet .voyager-event {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
   min-height: 0;
-  max-height: 400px;
+}
+
+.voyager-event-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex: none;
+}
+
+.voyager-event-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* why-roman's Back/Next: a dark fill with an accent outline, rather than the
+   toolkit's solid accent fill. !important because Vuetify sets a hex
+   `color` prop as inline background and text colors. */
+.tour-sheet .tour-text-controls .v-btn {
+  background-color: rgb(var(--v-theme-secondary)) !important;
+  color: white !important;
+}
+
+/* The empty dividers between the step dots were 16px each (Vuetify's
+   0 8px padding) -- wider than the dots themselves, and why 10 dots overflowed
+   a narrow drawer. The toolkit tries to shrink them, but its rule is scoped
+   and doesn't reach Vuetify's breadcrumb internals. Dropping them leaves the
+   spacing to the row's space-evenly, so the dots spread out when there's room
+   and sit close together when there isn't. */
+.tour-sheet .tour-dots .v-breadcrumbs-divider {
+  display: none;
+}
+
+/* Even touching, the dots don't fit between Back and Next in a narrow box (the
+   left drawer on a landscape phone is ~230px), so there they get a row of
+   their own above the buttons. The 300px is sized for ~13 steps: 13 dots at
+   ~10px each plus a few px of space, plus the 128px of buttons. Revisit it if
+   the tour grows well past that. */
+.tour-sheet.tour-text {
+  container-type: inline-size;
+}
+
+@container (max-width: 300px) {
+  .tour-sheet.tour-text .tour-text-controls {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    row-gap: 0.5rem;
+  }
+
+  .tour-sheet.tour-text .tour-text-controls .tour-dots {
+    order: -1;
+    flex: 1 1 100%;
+    max-width: none;
+  }
 }
 
 /* easier to just force it than wrestle with vuetify's built-in positioning */
