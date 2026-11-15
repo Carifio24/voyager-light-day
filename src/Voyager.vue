@@ -430,7 +430,7 @@ import { useUrlState } from "./composables/useUrlState";
 const urlState = useUrlState({ autoUpdate: true, inAddressBar: false, clearOnLoad: true });
 
 // kiosk / fullscreen //
-const kiosk = new URLSearchParams(window.location.search).get("kiosk")?.toLowerCase() === "true";
+const kiosk = urlState.get("kiosk")?.toLowerCase() === "true";
 if (kiosk) {
   document.body.classList.add("kiosk");
 }
@@ -438,7 +438,7 @@ if (kiosk) {
 const fullscreen = useFullscreen();
 
 // ui visibility //
-const splash = new URLSearchParams(window.location.search).get("splash")?.toLowerCase() !== "false";
+const splash = urlState.get("splash")?.toLowerCase() !== "false";
 const showSplashScreen = ref(splash);
 
 const showWebGL2Warning = ref(false);
