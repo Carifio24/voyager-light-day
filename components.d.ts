@@ -19,6 +19,7 @@ declare module 'vue' {
     SplashScreen: typeof import('./src/components/SplashScreen.vue')['default']
     TabbedSheet: typeof import('./src/components/TabbedSheet.vue')['default']
     TabPage: typeof import('./src/components/TabPage.vue')['default']
+    TourStep: typeof import('./src/components/TourStep.vue')['default']
     UserGuide: typeof import('./src/components/UserGuide.vue')['default']
     VideoWrapper: typeof import('./src/components/VideoWrapper.vue')['default']
     WebglTest: typeof import('@/components/WebGlTest.vue')['default']

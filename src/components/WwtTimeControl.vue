@@ -34,6 +34,7 @@
       <speed-control
         v-if="!hideRate"
         v-model="playing"
+        class="wwt-speed-control"
         :store="store"
         :default-rate="1000"
         :max-speed="100000000"
@@ -109,7 +110,6 @@ fieldset#wwt-time-control {
   font-size: 12px;
   font-family: monospace;
   gap: var(--spacing);
-  background-color: var(--wwt-surface-background);
   border: none; // the browser's default fieldset border
 
   input.wwt-time-control-input {
@@ -154,6 +154,24 @@ fieldset#wwt-time-control {
   // match the 2px borders on the icon buttons (vuetify's outlined default is thin, 1px)
   .wwt-now-button {
     border-width: 2px;
+  }
+}
+
+@media (width <= 600px) {
+  #speed-control.wwt-speed-control #speed-buttons {
+    gap: 12px;
+  }
+
+  // 28px buttons instead of 35: 12px icon, 6px padding, 2px border. The id beats the
+  // app's `.icon-wrapper { padding: 8px !important }`
+  fieldset#wwt-time-control .icon-wrapper {
+    padding: 6px !important;
+
+    > .v-icon {
+      font-size: 12px !important;
+      width: 12px !important;
+      height: 12px !important;
+    }
   }
 }
 </style>

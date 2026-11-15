@@ -112,7 +112,6 @@ const nowLabel = computed(() => store.currentTime.toISOString().replace("T", " "
   padding: 0 0.75em;
   font-family: monospace;
   font-size: 12px;
-  background-color: var(--wwt-surface-background);
   border-radius: 6px;
 
   .v-slider {
