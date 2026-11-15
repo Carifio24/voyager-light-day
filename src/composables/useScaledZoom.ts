@@ -1,4 +1,4 @@
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { WWTControl } from "@wwtelescope/engine";
 import { engineStore } from "@wwtelescope/engine-pinia";
 
@@ -30,9 +30,6 @@ export function useScaledZoom() {
   }
 
   const zoomSliderValue = computed(() => fovToSlider(store.zoomDeg));
-  watch(zoomSliderValue, (newVal) => {
-    console.log(`zoomSliderValue changed to ${newVal}`);
-  });
 
   /** set the zoom directly, within the current floor and ZOOM_MAX */
   function setZoom(zoom: number): number {
@@ -41,7 +38,6 @@ export function useScaledZoom() {
     control.renderContext.targetCamera.zoom = clamped;
     control.renderContext.viewCamera.zoom = clamped;
     control.renderOneFrame();
-    console.log(`setZoom(${zoom}) → ${clamped} (min=${zoomMin.value}, max=${zoomMax.value})`);
     return clamped;
   }
 
