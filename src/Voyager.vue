@@ -219,6 +219,7 @@
         :small-size="false"
         :accent-color="accentColor"
         :border-color="borderColor"
+        background-color="black"
         show-next-on-last-step
         :next-text="onLastStep ? 'Close' : 'Next'"
       >
@@ -427,7 +428,7 @@ useWWTKeyboardControls(store);
 
 // state in the url (the tour step) //
 import { useUrlState } from "./composables/useUrlState";
-const urlState = useUrlState({ autoUpdate: true, inAddressBar: false, clearOnLoad: true });
+const urlState = useUrlState({ autoUpdate: true, inAddressBar: true, clearOnLoad: false });
 
 // kiosk / fullscreen //
 const kiosk = urlState.get("kiosk")?.toLowerCase() === "true";
@@ -952,8 +953,8 @@ function closeSplashScreen() {
 :root {
   --default-font-size: clamp(0.7rem, 1.7vmin, 1.1rem);
   --default-line-height: clamp(1rem, 2.2vmin, 1.6rem);
+  --wwt-surface-background: rgba(0, 0, 0, 0);
 }
-
 
 
 html {
@@ -1116,7 +1117,7 @@ body {
   gap: 8px;
   width: 260px;
   padding: 8px;
-  background-color: rgba(3, 1, 37, 0.8);
+  background-color: var(--wwt-surface-background);
 
   // the current track in gold, matching the selected item in the open menu (item-color)
   .v-select__selection-text {
@@ -1150,7 +1151,7 @@ body {
 #light-time {
   padding: 6px 14px;
   text-align: center;
-  background-color: rgba(3, 1, 37, 0.8);
+  background-color: var(--wwt-surface-background);
 
   .light-time-label {
     font-size: 14px;

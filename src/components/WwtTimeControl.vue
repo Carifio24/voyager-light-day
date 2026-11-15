@@ -109,7 +109,7 @@ fieldset#wwt-time-control {
   font-size: 12px;
   font-family: monospace;
   gap: var(--spacing);
-  background-color: rgba(3, 1, 37, 0.8);
+  background-color: var(--wwt-surface-background);
   border: none; // the browser's default fieldset border
 
   input.wwt-time-control-input {
