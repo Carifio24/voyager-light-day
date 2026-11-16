@@ -14,6 +14,7 @@ declare module 'vue' {
     ClosableDialog: typeof import('./src/components/ClosableDialog.vue')['default']
     FollowTrajectoryButton: typeof import('./src/components/FollowTrajectoryButton.vue')['default']
     ImageCrossfadeSlider: typeof import('./src/components/ImageCrossfadeSlider.vue')['default']
+    LightDayCountdown: typeof import('./src/components/LightDayCountdown.vue')['default']
     Loader: typeof import('./src/components/Loader.vue')['default']
     MissionTimeSlider: typeof import('./src/components/MissionTimeSlider.vue')['default']
     SplashScreen: typeof import('./src/components/SplashScreen.vue')['default']

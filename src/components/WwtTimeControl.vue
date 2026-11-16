@@ -162,8 +162,6 @@ fieldset#wwt-time-control {
     gap: 12px;
   }
 
-  // 28px buttons instead of 35: 12px icon, 6px padding, 2px border. The id beats the
-  // app's `.icon-wrapper { padding: 8px !important }`
   fieldset#wwt-time-control .icon-wrapper {
     padding: 6px !important;
 

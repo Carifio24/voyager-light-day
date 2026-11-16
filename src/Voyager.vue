@@ -17,8 +17,15 @@
     >
       <div class="splash-content">
         <p class="splash-lead">Explore</p>
-        <p class="highlight">the night sky</p>
-        <p>&amp; let it inspire you to dare to do mighty things. it's reading rainbow</p>
+        <p class="highlight">VOYAGER's</p>
+        <p>Journey to</p>
+        <p class="highlight">One light-day</p>
+        <div class="splash-countdown">
+          <p>
+            Voyager 1 is one light-day from Earth in
+            <LightDayCountdown :target="ONE_LIGHT_DAY" />
+          </p>
+        </div>
       </div>
     </SplashScreen>
 
@@ -125,7 +132,6 @@
                 @activate="fullscreen = !fullscreen"
               />
               <icon-button
-                v-if="!showTour"
                 v-model="showControls"
                 icon="gear"
                 aria-label="View controls"
@@ -135,8 +141,27 @@
                 tooltip-location="start"
                 size="1x"
               />
+              <icon-button
+                v-model="showCountdown"
+                icon="stopwatch"
+                aria-label="Countdown to one light-day"
+                :color="accentColor"
+                :focus-color="accentColor"
+                tooltip-text="Countdown to one light-day"
+                tooltip-location="start"
+                size="1x"
+                :v-focus-toggle="showCountdown"
+              />
+              <ClosableDialog
+                v-model="showCountdown"
+                title="One light-day"
+                max-width="320"
+              >
+                Voyager 1 is one light-day from Earth in
+                <LightDayCountdown :target="ONE_LIGHT_DAY" />
+              </ClosableDialog>
               <div
-                v-if="showControls && !showTour"
+                v-if="showControls"
                 id="frame-controls"
               >
                 <v-select
@@ -171,6 +196,16 @@
             </div>
           </div>
 
+
+          <!-- <v-btn
+            density="compact"
+            variant="outlined"
+            style="margin-top: auto; align-self: center; pointer-events: auto"
+            @click="logView"
+          >
+            Log view
+          </v-btn> -->
+
           <div id="bottom-content">
             <!-- play/pause + speed to the left of the timeline; below it on small screens (see CSS) -->
             <div
@@ -178,7 +213,6 @@
               :class="{ 'in-tour': showTour }"
             >
               <wwt-time-control
-                v-if="!showTour"
                 v-model="timePlaying"
                 hide-time-input
                 hide-set-time
@@ -195,7 +229,6 @@
                 :log-scale-days="100"
                 @mousedown="missionSliderUses.increment()"
               />
-              <!-- in the tour: the clock around the step's event -->
               <MissionTimeSlider
                 v-else
                 id="event-slider"
@@ -259,8 +292,12 @@
             :title="step.title"
             :subtitle="`${step.event.date.toISOString().replace('T', ' ').slice(0, 16)} UT`"
             :image="step.event.image"
-            :image-label="`Image: ${step.event.imageTaken} / ${step.event.credit}`"
+            :image-label="`Image: ${step.event.credit}`"
+            :image-url="step.event.imageUrl"
+            :pds-url="step.event.pdsUrl"
+            :opus-url="step.event.opusUrl"
             @close="showTour = false"
+            @go-to-view="step.event.view && goToView(step.event.view)"
           >
             <p
               v-for="(paragraph, i) in step.text"
@@ -451,6 +488,7 @@ const fullscreen = useFullscreen();
 const splash = urlState.get("splash")?.toLowerCase() !== "false";
 const showSplashScreen = ref(splash);
 const showControls = ref(false);
+const showCountdown = ref(false);
 
 const showWebGL2Warning = ref(false);
 
@@ -643,6 +681,38 @@ function setMaximumZoomForView(tc: TrackTarget, scale: number) {
   }
 }
 
+import type { ViewSpec } from "@/types";
+
+function _logView() {
+  const camera = WWTControl.singleton.renderContext.viewCamera;
+  const view: ViewSpec = {
+    time: SpaceTimeController.get_now().toISOString(),
+    track: trackingCenter.value,
+    lat: camera.lat,
+    lng: camera.lng,
+    zoom: camera.zoom,
+    rotation: camera.rotation,
+    angle: camera.angle,
+    modelLogScale: modelLogScale.value,
+  };
+  console.log(JSON.stringify(view));
+}
+
+async function goToView(view: ViewSpec, instant = false) {
+  trackingCenter.value = view.track;
+  modelLogScale.value = view.modelLogScale;
+  store.setTime(new Date(view.time));
+  await nextTick();
+  const rc = WWTControl.singleton.renderContext;
+  for (const camera of instant ? [rc.viewCamera, rc.targetCamera] : [rc.targetCamera]) {
+    camera.lat = view.lat;
+    camera.lng = view.lng;
+    camera.zoom = view.zoom;
+    camera.rotation = view.rotation;
+    camera.angle = view.angle;
+  }
+}
+
 watch([trackingCenter, modelLogScale], ([tc, scale]) => {
   setMaximumZoomForView(tc, scale);
 });
@@ -706,16 +776,14 @@ function updateVoyagerLightTime() {
   const v = voyager1PositionAt(SpaceTimeController.get_now().getTime());
   voyagerLightTime.value = v
     ? hoursMinutesSeconds(lightTimeSeconds(distanceFromBodyKm(v, VOYAGER_FRAME, SolarSystemObjects.earth)))
-    : hoursMinutesSeconds(0); // before the data (launch day) it's under 0.2 s from Earth
+    : hoursMinutesSeconds(0);
 }
 
 const timePlaying = ref(false);
 
-/** stop the clock at the end of the data rather than play past it */
 function stopAtEnd() {
   if (timePlaying.value && SpaceTimeController.get_now() > voyagerSpan.end) {
     timePlaying.value = false;
-    // 1 s short: WWT's clock lands a few ms past an exact time, outside the data
     store.setTime(new Date(voyagerSpan.end.getTime() - 1000));
   }
 }
@@ -844,7 +912,7 @@ import {
   type BaseTourStepContent,
 } from  "@cosmicds/vue-toolkit";
 
-import { VOYAGER_1_EVENTS, eventWindow, type MissionEvent } from "./voyagerEvents";
+import { VOYAGER_1_EVENTS, ONE_LIGHT_DAY, eventWindow, type MissionEvent } from "./voyagerEvents";
 
 interface TourStepContent extends BaseTourStepContent {
   event: MissionEvent;
@@ -862,6 +930,10 @@ const tour = useTour<TourStepContent>({
     event,
     setup: async () => {
       store.waitForReady().then(() => {
+        if (event.view) {
+          goToView(event.view);
+          return;
+        }
         store.setTime(event.date);
         if (event.track !== undefined) {
           trackingCenter.value = event.track;
@@ -1135,7 +1207,6 @@ body {
 
 }
 
-// floats under the gear, over the view
 #frame-controls {
   position: absolute;
   top: calc(100% + 10px);
@@ -1255,7 +1326,6 @@ body {
     }
   }
   
-    // so let "Now" wrap
   .wwt-clock-controls {
     flex-wrap: wrap;
     justify-content: center;
@@ -1405,7 +1475,6 @@ body {
   padding: 0;
 }
 
-/* phones (the drawer at the bottom): a smaller tour (the step's own rules are in TourStep.vue) */
 .drawer-bottom .tour-sheet {
   padding: 4px;
 }
@@ -1422,11 +1491,16 @@ body {
   }
 }
 
-/* phones: the rating prompt sits above the bottom drawer, not over it */
 #app.bottom-drawer-open {
   .user-experience-teaser.attention-hook,
   #cds-user-experience.rating-root {
     bottom: calc(var(--drawer-bottom-height) + 5px);
   }
+}
+
+.splash-countdown {
+  background-color: rgb(var(--v-theme-cosmicds-blue));
+  border-radius: 10px;
+  padding: 0.25em 0.75em;
 }
 </style>

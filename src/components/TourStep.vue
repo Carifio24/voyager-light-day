@@ -1,8 +1,5 @@
 <template>
   <div class="selected-info-tour voyager-event">
-    <!-- our own header rather than the toolkit's show-close, whose icon
-         floats over the corner and so over the scrollbar. This row stays
-         put and only the body below it scrolls. -->
     <div class="voyager-event-header">
       <h3>{{ title }}</h3>
       <v-btn
@@ -20,15 +17,49 @@
         class="event-date"
       >
         {{ subtitle }}
+        <v-btn
+          icon="mdi-arrow-right-circle"
+          variant="text"
+          density="compact"
+          size="small"
+          aria-label="Go to this step's view"
+          @click="emit('go-to-view')"
+        />
       </p>
       <figure>
         <img
           :src="image"
           :alt="title"
         />
-        <figcaption class="event-credit">{{ imageLabel }}</figcaption>
+        <figcaption class="event-credit">
+          <a
+            v-if="imageUrl"
+            :href="imageUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >{{ imageLabel }}</a>
+          <template v-else>{{ imageLabel }}</template>
+        </figcaption>
       </figure>
       <slot />
+      <p
+        v-if="pdsUrl || opusUrl"
+        class="event-credit event-links"
+      >
+        <a
+          v-if="pdsUrl"
+          :href="pdsUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >PDS</a>
+        <template v-if="pdsUrl && opusUrl"> · </template>
+        <a
+          v-if="opusUrl"
+          :href="opusUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >OPUS</a>
+      </p>
     </div>
   </div>
 </template>
@@ -39,23 +70,19 @@ defineProps<{
   subtitle?: string;
   image: string;
   imageLabel: string;
+  imageUrl?: string;
+  pdsUrl?: string;
+  opusUrl?: string;
 }>();
 
 const emit = defineEmits<{
   close: [];
+  "go-to-view": [];
 }>();
 </script>
 
 <style lang="less">
 .voyager-event {
-  // A fixed-shape frame with the whole image fitted inside, rather than a
-  // full-width strip cropped to fill. The strip's shape followed the screen, and
-  // cropping a tall image like the Earth/Moon one to it left only the black gap
-  // between them. Almost every image is on a black sky, so the frame's black
-  // fill blends in.
-  // The width cap rather than a max-height is what keeps the frame 4:3: a
-  // max-height would leave the width at 100% and stretch the frame wide on
-  // short screens. 40vh wide at 4:3 is 30vh tall.
   img {
     display: block;
     width: min(100%, 40vh);
@@ -98,7 +125,10 @@ const emit = defineEmits<{
   margin: 0;
 }
 
-/* phones (the drawer at the bottom): a smaller tour, the image beside the text so both show */
+.voyager-event .event-links {
+  clear: both;
+}
+
 .drawer-bottom {
   .voyager-event {
     font-size: 0.875em;
