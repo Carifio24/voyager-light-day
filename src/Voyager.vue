@@ -185,10 +185,10 @@
                     hide-details
                   >
                     <template #prepend>
-                      <span class="model-size-end">Actual</span>
+                      <span class="model-size-end">1,000x</span>
                     </template>
                     <template #append>
-                      <span class="model-size-end">Enlarged</span>
+                      <span class="model-size-end">Even larger!</span>
                     </template>
                   </v-slider>
                 </div>
@@ -679,7 +679,7 @@ let voyager2Model: THREE.Group | null = null;
 const modelLogScale = ref(7);
 const MIN_MODEL_SCALE = 3; // log10 of the model's magnification (0 is actual size)
 const METERS_PER_AU = 149597870700;
-const MODEL_REAL_SIZE_METERS = 31;
+const MODEL_REAL_SIZE_METERS = 13;
 const showVoyagerModels = ref(true);
 
 function setMaximumZoomForView(tc: TrackTarget, scale: number) {
