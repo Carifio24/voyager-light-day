@@ -143,10 +143,10 @@
                     hide-details
                   >
                     <template #prepend>
-                      <span class="model-size-end">1000x</span>
+                      <span class="model-size-end">1,000x</span>
                     </template>
                     <template #append>
-                      <span class="model-size-end">Even larger</span>
+                      <span class="model-size-end">Even larger!</span>
                     </template>
                   </v-slider>
                 </div>
