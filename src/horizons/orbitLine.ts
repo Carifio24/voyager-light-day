@@ -2,7 +2,7 @@ import { OrbitLineList, Color, Vector3d, Matrix3d, Planets, WWTControl } from "@
 import type { SolarSystemObjects } from "@wwtelescope/engine-types";
 import type { HorizonsVector } from "./horizons";
 import type { Vec3 } from "./hermite";
-import { densifiedRows, splitAtSeams } from "./trajectory";
+import { densifiedRows, j2000PositionAt, splitAtSeams } from "./trajectory";
 import { precessEclipticDateToJ2000, precessionMatrix } from "./precession";
 
 // the line colour is in the vertices; the shader multiplies it by this
@@ -61,36 +61,93 @@ function viewTargetInFrame(frame: SolarSystemObjects, jdtdb: number): Vec3 {
   return { x, y, z };
 }
 
+/** points per line list in a trajectory line; consecutive chunks share their end point, so the line stays continuous */
+const CHUNK_POINTS = 512;
+
+/** a run cut into time-ordered chunks of at most CHUNK_POINTS points (each at least 2) */
+function chunksOf(run: HorizonsVector[]): HorizonsVector[][] {
+  const chunks: HorizonsVector[][] = [];
+  for (let i = 0; i < run.length - 1; i += CHUNK_POINTS - 1) {
+    chunks.push(run.slice(i, i + CHUNK_POINTS));
+  }
+  return chunks;
+}
+
 export interface TrajectoryLine {
-  /** J2000 points relative to the line's frame: each run between seams, densified */
-  runs: HorizonsVector[][];
+  /**
+   * J2000 points relative to the line's frame: each run between seams, densified, then cut into chunks in time order,
+   * so the line can be drawn up to a time with whole chunks plus one partial chunk
+   */
+  chunks: HorizonsVector[][];
   colorHex: string;
   /** the vertices are relative to this (J2000, relative to the frame), near the camera target */
   center: Vec3;
+  /** one per chunk */
   lineLists: OrbitLineList[];
+  /** the J2000 position at a UT time (ms), the same Hermite the spacecraft is placed with, so the line ends on it */
+  positionAt: (t: number) => HorizonsVector | null;
+  /** the chunk the drawing time falls in, through the points before it and the position at it */
+  partial: { chunk: number; untilMs: number; lineList: OrbitLineList } | null;
 }
 
 /** A line through J2000 rows with velocities: no segment across a seam, and densified to stay within tolAu of the Hermite */
 export function createTrajectoryLine(vectors: HorizonsVector[], tolAu: number, colorHex = "#ffffff"): TrajectoryLine {
-  const runs = splitAtSeams(vectors).map((rows) => densifiedRows(rows, tolAu));
-  return { runs, colorHex, center: ORIGIN, lineLists: [] };
+  const chunks = splitAtSeams(vectors).flatMap((rows) => chunksOf(densifiedRows(rows, tolAu)));
+  return { chunks, colorHex, center: ORIGIN, lineLists: [], positionAt: j2000PositionAt(vectors), partial: null };
+}
+
+/** the line list for chunk i drawn up to untilMs (strictly inside the chunk), rebuilt only when the chunk or time changes */
+function partialLineList(line: TrajectoryLine, i: number, untilMs: number): OrbitLineList {
+  if (line.partial && line.partial.chunk === i && line.partial.untilMs === untilMs) {
+    return line.partial.lineList;
+  }
+  line.partial?.lineList.clear();
+  const chunk = line.chunks[i];
+  const points: Vec3[] = [];
+  for (const v of chunk) {
+    if (v.date.getTime() > untilMs) {
+      break;
+    }
+    points.push(v);
+  }
+  const end = line.positionAt(untilMs);
+  if (end) {
+    points.push(end);
+  }
+  const lineList = createOrbitLineList(points, line.colorHex, line.center);
+  line.partial = { chunk: i, untilMs, lineList };
+  return lineList;
 }
 
 /**
- * Draw a trajectory line in `frame` at TDB jdtdb (rotated to that date's ecliptic). Relative to the frame's center, the
- * float32 vertices near a camera far out (following Voyager) were tens to hundreds of px off, or culled. So they're kept
- * relative to a point near the camera target, and rebuilt when the target moves too far from it for the zoom.
+ * Draw a trajectory line in `frame` at TDB jdtdb (rotated to that date's ecliptic), only up to the UT time untilMs
+ * (e.g. WWT's current time, so it ends at the spacecraft; Infinity for the whole line). Relative to the frame's center,
+ * the float32 vertices near a camera far out (following Voyager) were tens to hundreds of px off, or culled. So they're
+ * kept relative to a point near the camera target, and rebuilt when the target moves too far from it for the zoom.
  */
-export function drawTrajectoryLineInFrame(line: TrajectoryLine, frame: SolarSystemObjects, jdtdb: number) {
+export function drawTrajectoryLineInFrame(
+  line: TrajectoryLine,
+  frame: SolarSystemObjects,
+  jdtdb: number,
+  untilMs = Infinity,
+) {
   const target = viewTargetInFrame(frame, jdtdb);
   const c = line.center;
   const recenterAu = RECENTER_AU_PER_ZOOM * WWTControl.singleton.renderContext.viewCamera.zoom;
   if (line.lineLists.length === 0 || Math.hypot(target.x - c.x, target.y - c.y, target.z - c.z) > recenterAu) {
     // clear() frees the GL buffers
     line.lineLists.forEach((lineList) => lineList.clear());
+    line.partial?.lineList.clear();
+    line.partial = null;
     line.center = target;
-    line.lineLists = line.runs.map((run) => createOrbitLineList(run, line.colorHex, target));
+    line.lineLists = line.chunks.map((chunk) => createOrbitLineList(chunk, line.colorHex, target));
   }
   const rotation = precessionMatrix(jdtdb);
-  line.lineLists.forEach((lineList) => drawOrbitLineInFrame(lineList, frame, rotation, line.center));
+  line.chunks.forEach((chunk, i) => {
+    if (chunk[chunk.length - 1].date.getTime() <= untilMs) {
+      drawOrbitLineInFrame(line.lineLists[i], frame, rotation, line.center);
+    } else if (chunk[0].date.getTime() < untilMs) {
+      drawOrbitLineInFrame(partialLineList(line, i, untilMs), frame, rotation, line.center);
+    }
+  });
 }

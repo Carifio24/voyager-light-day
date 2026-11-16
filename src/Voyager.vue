@@ -639,13 +639,14 @@ const voyager2Layer = shallowRef<SpreadSheetLayer | null>(null);
 const saturnMoonLayers = shallowRef<SpreadSheetLayer[]>([]);
 
 function drawVoyagerOrbit() {
-  // J2000 points, rotated to the scene's ecliptic of date
+  // J2000 points, rotated to the scene's ecliptic of date, drawn only up to WWT's current time (where the spacecraft are)
+  const now = SpaceTimeController.get_now().getTime();
   const jdtdb = tdbNow();
   if (voyager1Line && showV1.value) {
-    drawTrajectoryLineInFrame(voyager1Line, VOYAGER_FRAME, jdtdb);
+    drawTrajectoryLineInFrame(voyager1Line, VOYAGER_FRAME, jdtdb, now);
   }
   if (voyager2Line && showv2.value) {
-    drawTrajectoryLineInFrame(voyager2Line, VOYAGER_FRAME, jdtdb);
+    drawTrajectoryLineInFrame(voyager2Line, VOYAGER_FRAME, jdtdb, now);
   }
 }
 
