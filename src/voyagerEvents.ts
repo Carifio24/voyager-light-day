@@ -253,7 +253,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     credit: "NASA/JPL-Caltech",
     imageTaken: "artist's concept, 2013",
     track: SolarSystemObjects.sun,
-    view: {"time":"2026-11-18T10:16:00.000Z","track":0,"lat":32.36864062499995,"lng":80.90261612548761,"zoom":1153.5017143794107,"rotation":0,"angle":0,"modelLogScale":9.61},
+    view: {"time":"2026-11-18T10:16:00.000Z","track":"voyager1","lat":3.1273276264099112,"lng":266.02358244622883,"zoom":1.3123507461412482,"rotation":0.6279999999999997,"angle":-0.0009999999999999994,"modelLogScale":9.61},
 
   },
 ];

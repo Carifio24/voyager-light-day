@@ -656,6 +656,7 @@ function createVoyagerLayer() {
 
 // time sliders: the whole file, in 1 minute steps
 const voyagerSpan = voyager2Table.timeSpan; // voyager 2 is longer
+voyagerSpan.end = new Date('Dec 31 2026 23:59:59 UTC'); // Cut off time after 2026. 
 const SLIDER_STEP_MS = 60 * 1000;
 
 import * as THREE from "three";
@@ -682,6 +683,7 @@ function setMaximumZoomForView(tc: TrackTarget, scale: number) {
 }
 
 import type { ViewSpec } from "@/types";
+import { addToWindow } from "@/utils";
 
 function _logView() {
   const camera = WWTControl.singleton.renderContext.viewCamera;
@@ -697,6 +699,8 @@ function _logView() {
   };
   console.log(JSON.stringify(view));
 }
+
+addToWindow("logView", _logView);
 
 async function goToView(view: ViewSpec, instant = false) {
   trackingCenter.value = view.track;
