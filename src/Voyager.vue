@@ -192,6 +192,14 @@
                     </template>
                   </v-slider>
                 </div>
+                <div class="model-visibility">
+                  <v-checkbox
+                    v-model="showVoyagerModels"
+                    label="Show Voyager models"
+                    density="compact"
+                    hide-details
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -671,6 +679,7 @@ const modelLogScale = ref(7);
 const MIN_MODEL_SCALE = 3; // log10 of the model's magnification (0 is actual size)
 const METERS_PER_AU = 149597870700;
 const MODEL_REAL_SIZE_METERS = 31;
+const showVoyagerModels = ref(true);
 
 function setMaximumZoomForView(tc: TrackTarget, scale: number) {
   if (tc === "voyager1" || tc === "voyager2") {
@@ -738,7 +747,7 @@ function setVoyager1ModelPosition(time: Date) {
   }
   const t = time.getTime();
   const p = voyager1PositionAt(t);
-  voyager1Model.visible = p !== null;
+  voyager1Model.visible = showVoyagerModels.value ? p !== null : false;
   if (!p) {
     return;
   }
@@ -755,7 +764,7 @@ function setVoyager2ModelPosition(time: Date) {
   }
   const t = time.getTime();
   const p = voyager2PositionAt(t);
-  voyager2Model.visible = p !== null;
+  voyager2Model.visible = showVoyagerModels.value ? p !== null : false;
   if (!p) {
     return;
   }
