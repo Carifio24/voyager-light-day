@@ -201,7 +201,7 @@
             density="compact"
             variant="outlined"
             style="margin-top: auto; align-self: center; pointer-events: auto"
-            @click="logView"
+            @click="_logView"
           >
             Log view
           </v-btn> -->
