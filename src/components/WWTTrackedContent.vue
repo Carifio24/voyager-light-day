@@ -22,7 +22,7 @@ interface WWTEngineStore extends ReturnType<typeof engineStore> {
 }
 
 interface WWTTrackedContentProps {
-  position: Vector3d;
+  position: Vector3d | null;
   offsetX?: number;
   offsetY?: number;
   visible?: boolean;
@@ -51,6 +51,11 @@ watch(() => props.visible, updateVisibility);
 watch(() => [props.position, props.offsetX, props.offsetY, props.frame] as [Vector3d, number, number,
 SolarSystemObjects], ([newPosition, newOffsetX, newOffsetY, newFrame]: [Vector3d, number,
 number, SolarSystemObjects]) => {
+
+  updateVisibility(newPosition != null);
+  if (!newPosition) {
+    return;
+  }
 
   const element = parent.value;
   if (!element) {
