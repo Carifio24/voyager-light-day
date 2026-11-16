@@ -14,6 +14,7 @@ export interface UseUrlState {
     track: (key: string, value: Ref) => void;
     getUrl(): string;
     loadedFromUrl: Ref<string[]>;
+    get(key: string): string | undefined;
 }
 
 /** 
@@ -62,6 +63,20 @@ export function useUrlState(options: UseUrlStateOptions): UseUrlState {
     console.warn(`Key ${key} is already being tracked.`);
   };
   
+  function get(key: string): string | undefined {
+    const valueRef = trackedValues.get(key);
+    if (valueRef) {
+      return valueRef.value;
+    }
+    if (initialUrlParams.has(key)) {
+      const initialValue = initialUrlParams.get(key);
+      if (initialValue !== null) {
+        return initialValue;
+      }
+    }
+    return undefined;
+  };
+  
   /* get url with tracked state values */
   const getUrl = (): string => {
     const url = new URL(window.location.href);
@@ -77,6 +92,7 @@ export function useUrlState(options: UseUrlStateOptions): UseUrlState {
     track,
     getUrl,
     loadedFromUrl,
+    get
   };
     
     

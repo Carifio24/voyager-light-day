@@ -2,7 +2,7 @@
   <v-app
     id="app"
     :style="cssVars"
-    :class="[smallSize ? 'app-is-small' : '', kiosk ? 'kiosk' : '']"
+    :class="[smallSize ? 'app-is-small' : '', kiosk ? 'kiosk' : '', drawerOpen && !sidePanel ? 'bottom-drawer-open' : '']"
   >
     <webgl-test @webgl2-disabled="showWebGL2Warning = true" />
 
@@ -17,8 +17,15 @@
     >
       <div class="splash-content">
         <p class="splash-lead">Explore</p>
-        <p class="highlight">the night sky</p>
-        <p>&amp; let it inspire you to dare to do mighty things. it's reading rainbow</p>
+        <p class="highlight">VOYAGER's</p>
+        <p>Journey to</p>
+        <p class="highlight">One light-day</p>
+        <div class="splash-countdown">
+          <p>
+            Voyager 1 is one light-day from Earth in
+            <LightDayCountdown :target="ONE_LIGHT_DAY" />
+          </p>
+        </div>
       </div>
     </SplashScreen>
 
@@ -63,6 +70,7 @@
           <div id="top-content">
             <div id="left-buttons">
               <icon-button
+                v-if="!showTour"
                 class="sheet-toggle learn-more-button"
                 :model-value="showTextSheet && infoSheetTab === 'information'"
                 icon="book-open"
@@ -71,10 +79,11 @@
                 :focus-color="accentColor"
                 tooltip-text="Learn More"
                 tooltip-location="start"
-                size="lg"
+                size="1x"
                 @activate="() => toggleInfoSheetTab('information')"
               />
               <icon-button
+                v-if="!showTour"
                 class="sheet-toggle user-guide-button"
                 :model-value="showTextSheet && infoSheetTab === 'user-guide'"
                 icon="question"
@@ -83,10 +92,11 @@
                 :focus-color="accentColor"
                 tooltip-text="User guide"
                 tooltip-location="start"
-                size="lg"
+                size="1x"
                 @activate="() => toggleInfoSheetTab('user-guide')"
               />
               <icon-button
+                v-if="!showTour"
                 v-model="showTour"
                 class="sheet-toggle tour-button"
                 icon="signs-post"
@@ -95,7 +105,7 @@
                 :focus-color="accentColor"
                 tooltip-text="Show Tour"
                 tooltip-location="start"
-                size="lg"
+                size="1x"
               />
               <!-- zoom, as in artemis-ii: top of the slider is zoomed in -->
               <div id="zoom-controls">
@@ -147,10 +157,42 @@
                 :focus-color="accentColor"
                 :tooltip-text="`${fullscreen ? 'Exit' : 'Make'} fullscreen`"
                 tooltip-location="start"
-                size="lg"
+                size="1x"
                 @activate="fullscreen = !fullscreen"
               />
-              <div id="frame-controls">
+              <icon-button
+                v-model="showControls"
+                icon="gear"
+                aria-label="View controls"
+                :color="accentColor"
+                :focus-color="accentColor"
+                tooltip-text="View controls"
+                tooltip-location="start"
+                size="1x"
+              />
+              <icon-button
+                v-model="showCountdown"
+                icon="stopwatch"
+                aria-label="Countdown to one light-day"
+                :color="accentColor"
+                :focus-color="accentColor"
+                tooltip-text="Countdown to one light-day"
+                tooltip-location="start"
+                size="1x"
+                :v-focus-toggle="showCountdown"
+              />
+              <ClosableDialog
+                v-model="showCountdown"
+                title="One light-day"
+                max-width="320"
+              >
+                Voyager 1 is one light-day from Earth in
+                <LightDayCountdown :target="ONE_LIGHT_DAY" />
+              </ClosableDialog>
+              <div
+                v-if="showControls"
+                id="frame-controls"
+              >
                 <v-select
                   v-model="trackingCenter"
                   :items="TRACK_ITEMS"
@@ -164,29 +206,51 @@
                   <div class="model-size-label">Spacecraft size</div>
                   <v-slider
                     v-model="modelLogScale"
-                    :min="0"
-                    :max="12"
+                    :min="MIN_MODEL_SCALE"
+                    :max="11"
                     :step="0.01"
                     aria-label="Spacecraft size"
                     density="compact"
                     hide-details
                   >
                     <template #prepend>
-                      <span class="model-size-end">Actual</span>
+                      <span class="model-size-end">1,000x</span>
                     </template>
                     <template #append>
-                      <span class="model-size-end">Enlarged</span>
+                      <span class="model-size-end">Even larger!</span>
                     </template>
                   </v-slider>
+                </div>
+                <div class="model-visibility">
+                  <v-checkbox
+                    v-model="showVoyagerModels"
+                    label="Show Voyager models"
+                    density="compact"
+                    hide-details
+                  />
                 </div>
               </div>
             </div>
           </div>
 
+
+          <!-- <v-btn
+            density="compact"
+            variant="outlined"
+            style="margin-top: auto; align-self: center; pointer-events: auto"
+            @click="_logView"
+          >
+            Log view
+          </v-btn> -->
+
           <div id="bottom-content">
             <!-- play/pause + speed to the left of the timeline; below it on small screens (see CSS) -->
-            <div id="timeline">
+            <div
+              id="timeline"
+              :class="{ 'in-tour': showTour }"
+            >
               <wwt-time-control
+                v-model="timePlaying"
                 hide-time-input
                 hide-set-time
                 hide-status
@@ -194,12 +258,20 @@
               />
               <!-- the whole mission, log in time since launch -->
               <MissionTimeSlider
+                v-if="!showTour"
                 id="mission-slider"
                 :start="voyagerSpan.start"
                 :end="voyagerSpan.end"
                 :step-ms="SLIDER_STEP_MS"
                 :log-scale-days="100"
                 @mousedown="missionSliderUses.increment()"
+              />
+              <MissionTimeSlider
+                v-else
+                id="event-slider"
+                :start="stepWindow.start"
+                :end="stepWindow.end"
+                :step-ms="SLIDER_STEP_MS"
               />
             </div>
           </div>
@@ -248,46 +320,29 @@
         :small-size="false"
         :accent-color="accentColor"
         :border-color="borderColor"
+        background-color="black"
         show-next-on-last-step
         :next-text="onLastStep ? 'Close' : 'Next'"
       >
         <template #default="{ step }">
-          <div class="selected-info-tour voyager-event">
-            <!-- our own header rather than the toolkit's show-close, whose icon
-                 floats over the corner and so over the scrollbar. This row stays
-                 put and only the body below it scrolls. -->
-            <div class="voyager-event-header">
-              <h3>{{ step.title }}</h3>
-              <v-btn
-                class="tour-close-button"
-                icon="mdi-close"
-                variant="text"
-                density="compact"
-                aria-label="Close tour"
-                @click="showTour = false"
-              />
-            </div>
-            <div class="voyager-event-body">
-              <p class="event-date">{{ step.event.date.toISOString().replace("T", " ").slice(0, 16) }} UT</p>
-              <img
-                :src="step.event.image"
-                :alt="step.title"
-              />
-              <p class="event-credit">Image: {{ step.event.imageTaken }} / {{ step.event.credit }}</p>
-              <!-- the clock around this event -->
-              <MissionTimeSlider
-                :start="stepWindow.start"
-                :end="stepWindow.end"
-                :step-ms="SLIDER_STEP_MS"
-              />
-              <p
-                v-for="(paragraph, i) in step.text"
-                :key="i"
-              >
-                {{ paragraph }}
-              </p>
-            </div>
-          </div>
+          <TourStep
+            :title="step.title"
+            :subtitle="`${step.event.date.toISOString().replace('T', ' ').slice(0, 16)} UT`"
+            :image="step.event.image"
+            :image-label="`Image: ${step.event.credit}`"
+            :image-url="step.event.imageUrl"
+            :pds-url="step.event.pdsUrl"
+            :opus-url="step.event.opusUrl"
+            @close="showTour = false"
+            @go-to-view="step.event.view && goToView(step.event.view)"
+          >
+            <p
+              v-for="(paragraph, i) in step.text"
+              :key="i"
+            >
+              {{ paragraph }}
+            </p>
+          </TourStep>
         </template>
       </TourSheet>
       <!--
@@ -456,10 +511,10 @@ useWWTKeyboardControls(store);
 
 // state in the url (the tour step) //
 import { useUrlState } from "./composables/useUrlState";
-const urlState = useUrlState({ autoUpdate: true, inAddressBar: false, clearOnLoad: true });
+const urlState = useUrlState({ autoUpdate: true, inAddressBar: true, clearOnLoad: false });
 
 // kiosk / fullscreen //
-const kiosk = new URLSearchParams(window.location.search).get("kiosk")?.toLowerCase() === "true";
+const kiosk = urlState.get("kiosk")?.toLowerCase() === "true";
 if (kiosk) {
   document.body.classList.add("kiosk");
 }
@@ -467,8 +522,10 @@ if (kiosk) {
 const fullscreen = useFullscreen();
 
 // ui visibility //
-const splash = new URLSearchParams(window.location.search).get("splash")?.toLowerCase() !== "false";
+const splash = urlState.get("splash")?.toLowerCase() !== "false";
 const showSplashScreen = ref(splash);
+const showControls = ref(false);
+const showCountdown = ref(false);
 
 const showWebGL2Warning = ref(false);
 
@@ -558,14 +615,14 @@ import {
 } from "./horizons/orbitLine";
 import type { HorizonsVector } from "./horizons/horizons";
 import { createMovingMarkerLayer, skyMapReady } from "./horizons/horizonsSpreadsheet";
-import { createSaturnMoonOrbits, createSaturnMoonLayers } from "./horizons/saturnMoons";
+import { createMoonOrbits, createMoonLayers } from "./horizons/saturnMoons";
 import { distanceFromBodyKm, lightTimeSeconds } from "./horizons/lightTime";
 import voyager1Data from "@/assets/voyager_spline_knots-sun.ecsv?raw";
 import voyager2Data from "@/assets/voyager2_spline_knots-sun.ecsv?raw";
 
 import { useFollowTrajectory } from "./composables/useFollowTrajectory";
 import { useScaledZoom } from "./composables/useScaledZoom";
-const { ZOOM_MAX, ZOOM_MIN, zoomSliderValue, onZoomSlider, zoomIn, zoomOut } = useScaledZoom();
+const { zoomMax, zoomSliderValue, onZoomSlider, zoomIn, zoomOut, setZoomMin } = useScaledZoom();
 
 // Voyager 1 closest approach to Saturn (the Titan flyby is earlier the same day, ~05:41 UT)
 const START_TIME = new Date("1980-11-12T23:46:00Z");
@@ -589,6 +646,7 @@ const TRACK_ITEMS: { title: string; value: TrackTarget }[] = [
   { title: "Voyager 1", value: "voyager1" },
   { title: "Voyager 2", value: "voyager2" },
   ...SOLAR_SYSTEM_OBJECT_ITEMS,
+  { title: "Io", value: SolarSystemObjects.io },
 ];
 const trackingCenter = ref<TrackTarget>("voyager1");
 const { follow: followTrajectory } = useFollowTrajectory(VOYAGER_FRAME);
@@ -605,7 +663,6 @@ function applyTrack(target: TrackTarget) {
 watch(trackingCenter, applyTrack);
 const VOYAGER_2_COLOR = "#00ffff";
 const VOYAGER_1_COLOR = "#ffff00";
-
 let voyager1Line: TrajectoryLine | null = null;
 let voyager2Line: TrajectoryLine | null = null;
 const showV1 = ref(true);
@@ -615,13 +672,14 @@ const voyager2Layer = shallowRef<SpreadSheetLayer | null>(null);
 const saturnMoonLayers = shallowRef<SpreadSheetLayer[]>([]);
 
 function drawVoyagerOrbit() {
-  // J2000 points, rotated to the scene's ecliptic of date
+  // J2000 points, rotated to the scene's ecliptic of date, drawn only up to WWT's current time (where the spacecraft are)
+  const now = SpaceTimeController.get_now().getTime();
   const jdtdb = tdbNow();
   if (voyager1Line && showV1.value) {
-    drawTrajectoryLineInFrame(voyager1Line, VOYAGER_FRAME, jdtdb);
+    drawTrajectoryLineInFrame(voyager1Line, VOYAGER_FRAME, jdtdb, now);
   }
   if (voyager2Line && showv2.value) {
-    drawTrajectoryLineInFrame(voyager2Line, VOYAGER_FRAME, jdtdb);
+    drawTrajectoryLineInFrame(voyager2Line, VOYAGER_FRAME, jdtdb, now);
   }
 }
 
@@ -641,6 +699,7 @@ function createVoyagerLayer() {
 
 // time sliders: the whole file, in 1 minute steps
 const voyagerSpan = voyager2Table.timeSpan; // voyager 2 is longer
+voyagerSpan.end = new Date('Dec 31 2026 23:59:59 UTC'); // Cut off time after 2026. 
 const SLIDER_STEP_MS = 60 * 1000;
 
 import * as THREE from "three";
@@ -652,7 +711,59 @@ let voyager1Model: THREE.Group | null = null;
 let voyager2Model: THREE.Group | null = null;
 // log10 of the models' magnification (0 is actual size)
 const modelLogScale = ref(7);
+const MIN_MODEL_SCALE = 3; // log10 of the model's magnification (0 is actual size)
 const METERS_PER_AU = 149597870700;
+const MODEL_REAL_SIZE_METERS = 13;
+const showVoyagerModels = ref(true);
+
+function setMaximumZoomForView(tc: TrackTarget, scale: number) {
+  if (tc === "voyager1" || tc === "voyager2") {
+    const modelSize = MODEL_REAL_SIZE_METERS * 10**scale; // 31 m at logs scale = 0.
+    const VIEW_MULTIPLIER = 1; // about how many times larger than the model should the view be
+    setZoomMin(VIEW_MULTIPLIER * modelSize / METERS_PER_AU);
+  } else {
+    setZoomMin(null); // null sets to default min zoom which is 0.00006
+  }
+}
+
+import type { ViewSpec } from "@/types";
+import { addToWindow } from "@/utils";
+
+function _logView() {
+  const camera = WWTControl.singleton.renderContext.viewCamera;
+  const view: ViewSpec = {
+    time: SpaceTimeController.get_now().toISOString(),
+    track: trackingCenter.value,
+    lat: camera.lat,
+    lng: camera.lng,
+    zoom: camera.zoom,
+    rotation: camera.rotation,
+    angle: camera.angle,
+    modelLogScale: modelLogScale.value,
+  };
+  console.log(JSON.stringify(view));
+}
+
+addToWindow("logView", _logView);
+
+async function goToView(view: ViewSpec, instant = false) {
+  trackingCenter.value = view.track;
+  modelLogScale.value = view.modelLogScale;
+  store.setTime(new Date(view.time));
+  await nextTick();
+  const rc = WWTControl.singleton.renderContext;
+  for (const camera of instant ? [rc.viewCamera, rc.targetCamera] : [rc.targetCamera]) {
+    camera.lat = view.lat;
+    camera.lng = view.lng;
+    camera.zoom = view.zoom;
+    camera.rotation = view.rotation;
+    camera.angle = view.angle;
+  }
+}
+
+watch([trackingCenter, modelLogScale], ([tc, scale]) => {
+  setMaximumZoomForView(tc, scale);
+});
 
 // the dish faces glb +y
 const DISH_AXIS = new THREE.Vector3(0, 1, 0);
@@ -671,7 +782,7 @@ function setVoyager1ModelPosition(time: Date) {
   }
   const t = time.getTime();
   const p = voyager1PositionAt(t);
-  voyager1Model.visible = p !== null;
+  voyager1Model.visible = showVoyagerModels.value ? p !== null : false;
   if (!p) {
     return;
   }
@@ -688,7 +799,7 @@ function setVoyager2ModelPosition(time: Date) {
   }
   const t = time.getTime();
   const p = voyager2PositionAt(t);
-  voyager2Model.visible = p !== null;
+  voyager2Model.visible = showVoyagerModels.value ? p !== null : false;
   if (!p) {
     return;
   }
@@ -713,15 +824,23 @@ function updateVoyagerLightTime() {
   const v = voyager1PositionAt(SpaceTimeController.get_now().getTime());
   voyagerLightTime.value = v
     ? hoursMinutesSeconds(lightTimeSeconds(distanceFromBodyKm(v, VOYAGER_FRAME, SolarSystemObjects.earth)))
-    : "";
+    : hoursMinutesSeconds(0);
+}
+
+const timePlaying = ref(false);
+
+function stopAtEnd() {
+  if (timePlaying.value && SpaceTimeController.get_now() > voyagerSpan.end) {
+    timePlaying.value = false;
+    store.setTime(new Date(voyagerSpan.end.getTime() - 1000));
+  }
 }
 
 /** the solar-system view, Voyager's line, marker and model, and Saturn's moons. Call once WWT is ready */
 function setUpVoyagerScene() {
-  WWTControl.singleton.set_zoomMax(ZOOM_MAX);
-  WWTControl.singleton.setSolarSystemMaxZoom(ZOOM_MAX);
-  // the wheel and keys stop here too (the engine's own floor is 1e-8, a 665 m camera distance)
-  WWTControl.singleton.setSolarSystemMinZoom(ZOOM_MIN);
+  WWTControl.singleton.set_zoomMax(zoomMax.value);
+  WWTControl.singleton.setSolarSystemMaxZoom(zoomMax.value);
+  setMaximumZoomForView(trackingCenter.value, modelLogScale.value);
 
   store.setBackgroundImageByName("Solar System");
   store.applySetting(["actualPlanetScale", false]);
@@ -738,10 +857,10 @@ function setUpVoyagerScene() {
   }
 
   createVoyagerOrbit();
-  createSaturnMoonOrbits(store);
+  createMoonOrbits(store);
   // the engine's moon file clears every layer and map when it arrives
   skyMapReady().then(() => {
-    createSaturnMoonLayers(store).then((layers) => (saturnMoonLayers.value = layers));
+    createMoonLayers(store).then((layers) => (saturnMoonLayers.value = layers));
     // after the moons, so Voyager's marker is drawn on top where they overlap
     createVoyagerLayer();
   });
@@ -755,6 +874,7 @@ function setUpVoyagerScene() {
     updateVoyagerLightTime();
     voyager1Location.value = voyager1PositionAt(time);
     voyager2Location.value = voyager2PositionAt(time);
+    stopAtEnd();
   });
   useThreeModel(store, glbUrl, renderThree, (model) => (voyager1Model = model));
   useThreeModel(store, glbUrl, renderThree, (model) => (voyager2Model = model));
@@ -846,7 +966,7 @@ import {
   type BaseTourStepContent,
 } from  "@cosmicds/vue-toolkit";
 
-import { VOYAGER_1_EVENTS, eventWindow, type MissionEvent } from "./voyagerEvents";
+import { VOYAGER_1_EVENTS, ONE_LIGHT_DAY, eventWindow, type MissionEvent } from "./voyagerEvents";
 
 interface TourStepContent extends BaseTourStepContent {
   event: MissionEvent;
@@ -864,6 +984,10 @@ const tour = useTour<TourStepContent>({
     event,
     setup: async () => {
       store.waitForReady().then(() => {
+        if (event.view) {
+          goToView(event.view);
+          return;
+        }
         store.setTime(event.date);
         if (event.track !== undefined) {
           trackingCenter.value = event.track;
@@ -977,8 +1101,8 @@ function closeSplashScreen() {
 :root {
   --default-font-size: clamp(0.7rem, 1.7vmin, 1.1rem);
   --default-line-height: clamp(1rem, 2.2vmin, 1.6rem);
+  --wwt-surface-background: rgba(0, 0, 0, 0.8);
 }
-
 
 
 html {
@@ -1070,6 +1194,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  flex-grow: 1;
 }
 
 #left-buttons {
@@ -1121,6 +1246,7 @@ body {
   align-items: flex-end;
   height: auto;
   pointer-events: auto;
+  position: relative;
 }
 
 #bottom-content {
@@ -1131,17 +1257,23 @@ body {
   justify-content: flex-start;
   align-items: center;
   gap: 1rem;
+  flex-grow: 0;
 
 }
 
 #frame-controls {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
   pointer-events: auto;
   display: flex;
   flex-direction: column;
   gap: 8px;
   width: 260px;
   padding: 8px;
-  background-color: rgba(3, 1, 37, 0.8);
+  background-color: black;
+  border: 1px solid var(--accent-color);
+  border-radius: 5px;
 
   // the current track in gold, matching the selected item in the open menu (item-color)
   .v-select__selection-text {
@@ -1173,14 +1305,15 @@ body {
 }
 
 #light-time {
+  margin-top: -0.75rem;
   padding: 6px 14px;
   text-align: center;
-  background-color: rgba(3, 1, 37, 0.8);
+  background-color: var(--wwt-surface-background);
+  border-radius: 4px;
 
   .light-time-label {
     font-size: 14px;
     opacity: 0.8;
-    margin-bottom: 0.25rem;
   }
 
   .light-time-value {
@@ -1193,20 +1326,24 @@ body {
 #timeline {
   flex: 1 1 auto;
   min-width: 0;
-  margin: 0 5% 2.5rem;
+  margin: 0 5% 0.25rem;
   display: flex;
-  // bottom-align so the buttons line up with the track, not the track + date above it.
-  // `end`, not `flex-end`: wrap-reverse flips which edge flex-end means
   align-items: end;
-  gap: 0.5rem;
-  // when there isn't room for both (e.g. the floating tour is open), wrap-reverse puts the
-  // controls under the slider rather than above it, matching the small-screen layout
+  gap: 8px;
   flex-wrap: wrap-reverse;
   justify-content: center;
+  background-color: var(--wwt-surface-background);
+  padding-inline: 8px;
+  padding-bottom: 8px;
 }
 
-#mission-slider {
-  // below ~400px the track itself gets too short to scrub
+// no padding when app is small
+#app.is-small #timeline {
+  padding-inline: 0;
+}
+
+#mission-slider,
+#event-slider {
   flex: 1 1 400px;
   min-width: 0;
   // the current date on its own line, centered above the track
@@ -1242,57 +1379,27 @@ body {
       display: none;
     }
   }
-
-  // on phones the toolkit's SpeedControl spaces its buttons wider (~300px), so let "Now" wrap
+  
   .wwt-clock-controls {
     flex-wrap: wrap;
     justify-content: center;
   }
-}
 
-.voyager-event {
-  // A fixed-shape frame with the whole image fitted inside, rather than a
-  // full-width strip cropped to fill. The strip's shape followed the screen, and
-  // cropping a tall image like the Earth/Moon one to it left only the black gap
-  // between them. Almost every image is on a black sky, so the frame's black
-  // fill blends in.
-  // The width cap rather than a max-height is what keeps the frame 4:3: a
-  // max-height would leave the width at 100% and stretch the frame wide on
-  // short screens. 40vh wide at 4:3 is 30vh tall.
-  img {
-    display: block;
-    width: min(100%, 40vh);
-    margin-inline: auto;
-    aspect-ratio: 4 / 3;
-    object-fit: contain;
-    background: black;
-    border-radius: 4px;
+  &.in-tour {
+    flex: 1 1 auto;
   }
 
-  .event-date,
-  .event-credit {
-    font-size: 0.85em;
-    opacity: 0.8;
+  #event-slider {
+    flex: 0 0 auto;
   }
 
-  // the track on its own line, the dates and clock under it
-  .mission-time-slider {
-    flex-wrap: wrap;
-    justify-content: space-between;
-    margin-bottom: 0.5em;
-
-    .v-slider {
-      flex-basis: 100%;
-      order: -1;
-    }
-  }
 }
 
 // neither #logo-credits nor #icons-container are flex
 #logo-credits.cds-bottom-credits {
-  position: absolute;
-  bottom: 0.25rem;
-  right: 0.5rem;
+  margin-top: 0.5rem;
+  justify-self: flex-end;
+  align-self: flex-end;
 }
 #logo-credits.cds-bottom-credits > #icons-container {
   a {
@@ -1369,27 +1476,6 @@ body {
   overflow: hidden;
 }
 
-.tour-sheet .voyager-event {
-  display: flex;
-  flex-direction: column;
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
-.voyager-event-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-  flex: none;
-}
-
-.voyager-event-body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-}
-
 /* why-roman's Back/Next: a dark fill with an accent outline, rather than the
    toolkit's solid accent fill. !important because Vuetify sets a hex
    `color` prop as inline background and text colors. */
@@ -1445,5 +1531,34 @@ body {
 
 .voyager-label {
   font-family: monospace;
+ }
+ 
+.drawer-bottom .tour-sheet {
+  padding: 4px;
+}
+
+.app-is-small #light-time {
+  padding: 2px 8px;
+
+  .light-time-label {
+    font-size: 11px;
+  }
+
+  .light-time-value {
+    font-size: 15px;
+  }
+}
+
+#app.bottom-drawer-open {
+  .user-experience-teaser.attention-hook,
+  #cds-user-experience.rating-root {
+    bottom: calc(var(--drawer-bottom-height) + 5px);
+  }
+}
+
+.splash-countdown {
+  background-color: rgb(var(--v-theme-cosmicds-blue));
+  border-radius: 10px;
+  padding: 0.25em 0.75em;
 }
 </style>
