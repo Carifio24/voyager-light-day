@@ -200,6 +200,15 @@
                     hide-details
                   />
                 </div>
+                <div class="playback-rate-input">
+                  <v-text-field
+                    v-model="playbackRate"
+                    label="Playback rate (seconds per second)"
+                    type="number"
+                    density="compact"
+                    hide-details
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -219,14 +228,14 @@
             <div
               id="timeline"
               :class="{ 'in-tour': showTour }"
-            > {{ timePlaying }}
+            > 
               <wwt-time-control
                 v-model="timePlaying"
+                v-model:rate="playbackRate"
                 hide-time-input
                 hide-set-time
                 hide-status
                 :color="accentColor"
-                :rate="playbackRate"
               />
               <!-- the whole mission, log in time since launch -->
               <MissionTimeSlider

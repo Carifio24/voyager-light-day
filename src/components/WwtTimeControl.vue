@@ -41,7 +41,12 @@
         :max-speed="100000000"
         :show-status="!hideStatus"
         :color="color"
+        hide-more-controls
+        @speed-up="(r) => rate = r"
+        @slow-down="(r) => rate = r"
+        @set-rate="(r) => rate = r"
       />
+      {{ niceRate(rate, 0) }}
       <v-btn
         v-if="!hideNow"
         class="text-none wwt-now-button"
@@ -61,6 +66,7 @@
 import { ref, watch, onMounted, useTemplateRef, type WritableComputedRef} from "vue";
 import { engineStore } from "@wwtelescope/engine-pinia";
 import { SpeedControl } from "@cosmicds/vue-toolkit";
+import { niceRate } from "../readable_rates";
 
 const store = engineStore();
 
