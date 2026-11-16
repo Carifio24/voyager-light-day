@@ -219,13 +219,14 @@
             <div
               id="timeline"
               :class="{ 'in-tour': showTour }"
-            >
+            > {{ timePlaying }}
               <wwt-time-control
                 v-model="timePlaying"
                 hide-time-input
                 hide-set-time
                 hide-status
                 :color="accentColor"
+                :rate="playbackRate"
               />
               <!-- the whole mission, log in time since launch -->
               <MissionTimeSlider
@@ -305,7 +306,9 @@
             :pds-url="step.event.pdsUrl"
             :opus-url="step.event.opusUrl"
             @close="showTour = false"
-            @go-to-view="step.event.view && goToView(step.event.view)"
+            @go-to-view="() => {
+              if (step.event.view) goToView(step.event.view);
+            }"
           >
             <p
               v-for="(paragraph, i) in step.text"
@@ -794,6 +797,7 @@ function updateVoyagerLightTime() {
 }
 
 const timePlaying = ref(false);
+const playbackRate = ref(1000); // 1000x real time
 
 function stopAtEnd() {
   if (timePlaying.value && SpaceTimeController.get_now() > voyagerSpan.end) {
@@ -926,7 +930,7 @@ import {
   type BaseTourStepContent,
 } from  "@cosmicds/vue-toolkit";
 
-import { VOYAGER_1_EVENTS, ONE_LIGHT_DAY, eventWindow, type MissionEvent } from "./voyagerEvents";
+import { VOYAGER_1_EVENTS, ONE_LIGHT_DAY, eventWindow, eventForTime, type MissionEvent } from "./voyagerEvents";
 
 interface TourStepContent extends BaseTourStepContent {
   event: MissionEvent;
@@ -944,6 +948,9 @@ const tour = useTour<TourStepContent>({
     event,
     setup: async () => {
       store.waitForReady().then(() => {
+        if (timePlaying.value) {
+          return;
+        }
         if (event.view) {
           goToView(event.view);
           return;
@@ -957,6 +964,20 @@ const tour = useTour<TourStepContent>({
   })),
 });
 urlState.track("tour", tour.stepID);
+
+import { watchThrottled } from "@vueuse/core";
+watchThrottled(() => store.currentTime, (newTime) => {
+  if (!timePlaying.value) {
+    return;
+  }
+  const step = eventForTime(VOYAGER_1_EVENTS, newTime);
+  if (step !== undefined) {
+    console.log(`time changed to ${newTime.toISOString()}, step ${step}`);
+  }
+  if (step !== undefined && step !== tour.stepIndex.value) {
+    tour.goToStep(step, true);
+  }
+}, { throttle: 100 });
 
 // On the last step the Next button becomes Close. TourSheet's Next calls
 // tour.next(), which in the toolkit is an unbounded stepIndex += 1, so the sheet

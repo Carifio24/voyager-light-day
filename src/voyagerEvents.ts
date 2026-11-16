@@ -66,6 +66,35 @@ export function eventWindow(events: MissionEvent[], i: number): TimeRange {
   };
 }
 
+export function eventForTime(events: MissionEvent[], time: Date): number | undefined {
+  const t = time.getTime();
+  const inWindow: MissionEvent[] = [];
+  for (let i = 0; i < events.length; i++) {
+    const window = eventWindow(events, i);
+    if (t >= window.start.getTime() && t <= window.end.getTime()) {
+      inWindow.push(events[i]);
+    }
+  }
+  if (inWindow.length === 1) {
+    return events.indexOf(inWindow[0]);
+  }
+  if (inWindow.length > 1) {
+    // pick the closest to the time
+    let closestIndex = events.indexOf(inWindow[0]);
+    let closestDiff = Math.abs(events[closestIndex].date.getTime() - t);
+    for (let i = 1; i < inWindow.length; i++) {
+      const index = events.indexOf(inWindow[i]);
+      const diff = Math.abs(events[index].date.getTime() - t);
+      if (diff < closestDiff) {
+        closestIndex = index;
+        closestDiff = diff;
+      }
+    }
+    return closestIndex;
+  }
+  return undefined;
+}
+
 export const VOYAGER_1_EVENTS: MissionEvent[] = [
   {
     title: "Launch",
