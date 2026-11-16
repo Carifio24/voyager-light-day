@@ -24,6 +24,11 @@
 
     <v-main>
       <div id="main-content">
+
+        <wwt-tracked-content
+        >
+        </wwt-tracked-content>
+
         <WorldWideTelescope :wwt-namespace="wwtNamespace"></WorldWideTelescope>
         <wwt-loader v-model="isLoading" />
 

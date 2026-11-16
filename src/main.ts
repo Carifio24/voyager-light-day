@@ -42,6 +42,8 @@ import focusGrab from "./directives/focusGrab";
 // need to fix SpeedControl from the toolkit
 import { ClickOutside } from "vuetify/directives";
 
+import { WWTTrackedContent } from "./composables/WWTTrackedContent.vue";
+
 import { addWwtlib } from "./wwt-hacks";
 addWwtlib();
 
@@ -61,11 +63,13 @@ createApp(Voyager, {
   .directive("focus-grab", focusGrab)
   .directive("click-outside", ClickOutside)
 
+  .component('wwt-tracked-content', WWTTrackedContent)
+
   // Mount
   .mount("#app-mount");
 
-  
-  
+
+
 
 // https://david-gilbertson.medium.com/removing-that-ugly-focus-ring-and-keeping-it-too-6c8727fefcd2
 // apparently quite the old problem.
