@@ -977,18 +977,6 @@ const tour = useTour<TourStepContent>({
 });
 urlState.track("tour", tour.stepID);
 
-import { watchThrottled } from "@vueuse/core";
-watchThrottled(() => store.currentTime, (newTime) => {
-  if (!timePlaying.value) {
-    return;
-  }
-  const step = eventForTime(VOYAGER_1_EVENTS, newTime);
-  if (step !== undefined && step !== tour.stepIndex.value) {
-    console.log(`time changed to ${newTime.toISOString()}, step ${step}`);
-    tour.goToStep(step, true);
-  }
-}, { throttle: 100 });
-
 // playback //
 // While playing, a frame callback sets the clock rate and the camera for wherever the clock is.
 const WINDOWS = VOYAGER_1_EVENTS.map((_, i) => eventWindow(VOYAGER_1_EVENTS, i)); // in date order
@@ -1087,6 +1075,9 @@ function followEventsWhilePlaying() {
   setClockRate(playbackRateAt(now));
 
   const step = eventForTime(VOYAGER_1_EVENTS, now);
+  if (step !== undefined && step !== tour.stepIndex.value) {
+    tour.goToStep(step, true);
+  }
   if (step !== currentStep) { // only on a change, so a track picked by hand lasts until the next one
     currentStep = step;
     setCameraForStep(step, now);
