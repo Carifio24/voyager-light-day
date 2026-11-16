@@ -42,7 +42,7 @@ import focusGrab from "./directives/focusGrab";
 // need to fix SpeedControl from the toolkit
 import { ClickOutside } from "vuetify/directives";
 
-import { WWTTrackedContent } from "./composables/WWTTrackedContent.vue";
+import WWTTrackedContent from "./components/WWTTrackedContent.vue";
 
 import { addWwtlib } from "./wwt-hacks";
 addWwtlib();
