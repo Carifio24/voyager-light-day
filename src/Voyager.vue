@@ -28,8 +28,8 @@
         <wwt-tracked-content
           :store="store"
           :position="voyager1Location"
-          :offset-x="5"
-          :offset-y="0"
+          :offset-x="15"
+          :offset-y="-5"
         >
           <p
             class="voyager-label"
@@ -42,8 +42,8 @@
         <wwt-tracked-content
           :store="store"
           :position="voyager2Location"
-          :offset-x="5"
-          :offset-y="0"
+          :offset-x="15"
+          :offset-y="-5"
         >
           <p
             class="voyager-label"

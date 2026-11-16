@@ -9,9 +9,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, useTemplateRef, watch } from "vue";
-import type { Vector3d } from "@wwtelescope/engine";
+import { useTemplateRef, watch } from "vue";
+import { Vector3d } from "@wwtelescope/engine";
+import { SolarSystemObjects } from "@wwtelescope/engine-types";
 import { engineStore } from '@wwtelescope/engine-pinia';
+
+import { bodyCenterInScene } from "../horizons/orbitLine";
 
 interface WWTEngineStore extends ReturnType<typeof engineStore> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,6 +26,7 @@ interface WWTTrackedContentProps {
   offsetX?: number;
   offsetY?: number;
   visible?: boolean;
+  frame?: SolarSystemObjects;
   store: WWTEngineStore;
 }
 
@@ -30,6 +34,7 @@ const props = withDefaults(defineProps<WWTTrackedContentProps>(), {
   visible: true,
   offsetX: 0,
   offsetY: 0,
+  frame: SolarSystemObjects.sun,
 });
 
 const parent = useTemplateRef("parent");
@@ -43,15 +48,18 @@ function updateVisibility(visible: boolean) {
 
 watch(() => props.visible, updateVisibility);
 
-watch(() => [props.position, props.offsetX, props.offsetY] as [Vector3d, number, number], ([newPosition, newOffsetX, newOffsetY]: [Vector3d, number,
-number]) => {
+watch(() => [props.position, props.offsetX, props.offsetY, props.frame] as [Vector3d, number, number,
+SolarSystemObjects], ([newPosition, newOffsetX, newOffsetY, newFrame]: [Vector3d, number,
+number, SolarSystemObjects]) => {
 
   const element = parent.value;
   if (!element) {
     return;
   }
 
-  const screenPoint = props.store.findScreenPointForCoordinates(newPosition);
+  const center = bodyCenterInScene(newFrame);
+  const position = Vector3d.create(newPosition.x + center.x, newPosition.y + center.z, newPosition.z + center.y);
+  const screenPoint = props.store.findScreenPointForCoordinates(position);
   screenPoint.x += newOffsetX;
   screenPoint.y += newOffsetY;
 
