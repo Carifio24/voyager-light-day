@@ -585,7 +585,7 @@ import {
   type TrajectoryLine,
 } from "./horizons/orbitLine";
 import { createMovingMarkerLayer, skyMapReady } from "./horizons/horizonsSpreadsheet";
-import { createSaturnMoonOrbits, createSaturnMoonLayers } from "./horizons/saturnMoons";
+import { createMoonOrbits, createMoonLayers } from "./horizons/saturnMoons";
 import { distanceFromBodyKm, lightTimeSeconds } from "./horizons/lightTime";
 import voyager1Data from "@/assets/voyager_spline_knots-sun.ecsv?raw";
 import voyager2Data from "@/assets/voyager2_spline_knots-sun.ecsv?raw";
@@ -824,10 +824,10 @@ function setUpVoyagerScene() {
   }
 
   createVoyagerOrbit();
-  createSaturnMoonOrbits(store);
+  createMoonOrbits(store);
   // the engine's moon file clears every layer and map when it arrives
   skyMapReady().then(() => {
-    createSaturnMoonLayers(store).then((layers) => (saturnMoonLayers.value = layers));
+    createMoonLayers(store).then((layers) => (saturnMoonLayers.value = layers));
     // after the moons, so Voyager's marker is drawn on top where they overlap
     createVoyagerLayer();
   });
