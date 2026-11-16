@@ -39,7 +39,6 @@ const SATURN_MOONS: MoonDefinition[] = [
 const URANUS_MOONS: MoonDefinition[] = [
   { name: "Miranda", table: new HorizonsVectorTable(mirandaData), periodDays: 1.413479, color: MIRANDA_COLOR, parent: SolarSystemObjects.uranus, nearParentAu: 0.1 },
 ];
-console.log(URANUS_MOONS[0].table);
 
 /** shift t (ms) by whole periods so it lands in [start, start + period), and not past the table's end */
 function wrapTimeToOrbit(t: number, start: number, end: number, period: number): number {

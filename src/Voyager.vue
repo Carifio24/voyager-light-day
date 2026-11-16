@@ -133,33 +133,15 @@
               />
               <icon-button
                 v-model="showControls"
-                icon="gear"
-                aria-label="View controls"
+                class="sheet-toggle"
+                :icon="showControls ? 'xmark' : 'sliders'"
+                :aria-label="showControls ? 'Hide controls' : 'View controls'"
                 :color="accentColor"
                 :focus-color="accentColor"
-                tooltip-text="View controls"
+                :tooltip-text="showControls ? 'Hide controls' : 'View controls'"
                 tooltip-location="start"
                 size="1x"
               />
-              <icon-button
-                v-model="showCountdown"
-                icon="stopwatch"
-                aria-label="Countdown to one light-day"
-                :color="accentColor"
-                :focus-color="accentColor"
-                tooltip-text="Countdown to one light-day"
-                tooltip-location="start"
-                size="1x"
-                :v-focus-toggle="showCountdown"
-              />
-              <ClosableDialog
-                v-model="showCountdown"
-                title="One light-day"
-                max-width="320"
-              >
-                Voyager 1 is one light-day from Earth in
-                <LightDayCountdown :target="ONE_LIGHT_DAY" />
-              </ClosableDialog>
               <div
                 v-if="showControls"
                 id="frame-controls"
@@ -245,6 +227,26 @@
                 :step-ms="SLIDER_STEP_MS"
               />
             </div>
+            <icon-button
+              v-model="showCountdown"
+              class="sheet-toggle"
+              icon="alarm-clock"
+              aria-label="Countdown to one light-day"
+              :color="accentColor"
+              :focus-color="accentColor"
+              tooltip-text="Countdown to one light-day"
+              tooltip-location="start"
+              size="1x"
+              :v-focus-toggle="showCountdown"
+            />
+            <ClosableDialog
+              v-model="showCountdown"
+              title="One light-day"
+              max-width="320"
+            >
+              Voyager 1 is one light-day from Earth in
+              <LightDayCountdown :target="ONE_LIGHT_DAY" />
+            </ClosableDialog>
           </div>
 
           <!-- credit logos $logo-credits.cds-bottom-credits -->
@@ -1257,6 +1259,23 @@ body {
     font-size: 11px;
     opacity: 0.8;
   }
+
+  // styled like the "Spacecraft size" label
+  .model-visibility .v-label {
+    font-size: 12px;
+    opacity: 0.8;
+  }
+
+  // a smaller box than vuetify's 24px
+  .model-visibility .v-selection-control__input .v-icon {
+    font-size: 18px;
+  }
+
+  // lines the drawn box (inset in its icon, which is centered in a wider input) up with the 16px text inset above.
+  // Measured; retune if the icon size changes
+  .model-visibility {
+    padding-left: 9px;
+  }
 }
 
 #center-buttons {
@@ -1382,7 +1401,7 @@ body {
    for specificity: it has to beat the toolkit's scoped .active and :focus
    rules, and :focus would otherwise recolor the icon gold on the gold fill
    right after a click. */
-#left-buttons .icon-wrapper.sheet-toggle.active {
+.icon-wrapper.sheet-toggle.active {
   background-color: rgb(var(--v-theme-primary));
   border-color: rgb(var(--v-theme-primary));
   color: rgb(var(--v-theme-secondary));
