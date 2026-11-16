@@ -135,18 +135,18 @@
                   <div class="model-size-label">Spacecraft size</div>
                   <v-slider
                     v-model="modelLogScale"
-                    :min="0"
-                    :max="12"
+                    :min="MIN_MODEL_SCALE"
+                    :max="11"
                     :step="0.01"
                     aria-label="Spacecraft size"
                     density="compact"
                     hide-details
                   >
                     <template #prepend>
-                      <span class="model-size-end">Actual</span>
+                      <span class="model-size-end">1,000x</span>
                     </template>
                     <template #append>
-                      <span class="model-size-end">Enlarged</span>
+                      <span class="model-size-end">Even larger!</span>
                     </template>
                   </v-slider>
                 </div>
@@ -535,7 +535,7 @@ import voyager2Data from "@/assets/voyager2_spline_knots-sun.ecsv?raw";
 
 import { useFollowTrajectory } from "./composables/useFollowTrajectory";
 import { useScaledZoom } from "./composables/useScaledZoom";
-const { ZOOM_MAX, ZOOM_MIN, zoomSliderValue, onZoomSlider, zoomIn, zoomOut } = useScaledZoom();
+const { zoomMax, zoomSliderValue, onZoomSlider, zoomIn, zoomOut, setZoomMin } = useScaledZoom();
 
 // Voyager 1 closest approach to Saturn (the Titan flyby is earlier the same day, ~05:41 UT)
 const START_TIME = new Date("1980-11-12T23:46:00Z");
@@ -572,7 +572,6 @@ function applyTrack(target: TrackTarget) {
 watch(trackingCenter, applyTrack);
 const VOYAGER_2_COLOR = "#00ffff";
 const VOYAGER_1_COLOR = "#ffff00";
-
 let voyager1Line: TrajectoryLine | null = null;
 let voyager2Line: TrajectoryLine | null = null;
 const showV1 = ref(true);
@@ -619,7 +618,23 @@ let voyager1Model: THREE.Group | null = null;
 let voyager2Model: THREE.Group | null = null;
 // log10 of the models' magnification (0 is actual size)
 const modelLogScale = ref(7);
+const MIN_MODEL_SCALE = 3; // log10 of the model's magnification (0 is actual size)
 const METERS_PER_AU = 149597870700;
+const MODEL_REAL_SIZE_METERS = 13;
+
+function setMaximumZoomForView(tc: TrackTarget, scale: number) {
+  if (tc === "voyager1" || tc === "voyager2") {
+    const modelSize = MODEL_REAL_SIZE_METERS * 10**scale; // 31 m at logs scale = 0.
+    const VIEW_MULTIPLIER = 1; // about how many times larger than the model should the view be
+    setZoomMin(VIEW_MULTIPLIER * modelSize / METERS_PER_AU);
+  } else {
+    setZoomMin(null); // null sets to default min zoom which is 0.00006
+  }
+}
+
+watch([trackingCenter, modelLogScale], ([tc, scale]) => {
+  setMaximumZoomForView(tc, scale);
+});
 
 // the dish faces glb +y
 const DISH_AXIS = new THREE.Vector3(0, 1, 0);
@@ -685,10 +700,9 @@ function updateVoyagerLightTime() {
 
 /** the solar-system view, Voyager's line, marker and model, and Saturn's moons. Call once WWT is ready */
 function setUpVoyagerScene() {
-  WWTControl.singleton.set_zoomMax(ZOOM_MAX);
-  WWTControl.singleton.setSolarSystemMaxZoom(ZOOM_MAX);
-  // the wheel and keys stop here too (the engine's own floor is 1e-8, a 665 m camera distance)
-  WWTControl.singleton.setSolarSystemMinZoom(ZOOM_MIN);
+  WWTControl.singleton.set_zoomMax(zoomMax.value);
+  WWTControl.singleton.setSolarSystemMaxZoom(zoomMax.value);
+  setMaximumZoomForView(trackingCenter.value, modelLogScale.value);
 
   store.setBackgroundImageByName("Solar System");
   store.applySetting(["actualPlanetScale", false]);
