@@ -64,7 +64,7 @@ function distanceFromCamera(body: SolarSystemObjects): number {
   return Math.hypot(b.x - c.x, b.y - c.y, b.z - c.z);
 }
 
-const nearParent = (parent: SolarSystemObjects) => distanceFromCamera(parent) < 10; // 1au works
+const nearParent = (parent: SolarSystemObjects) => distanceFromCamera(parent) < 1; // 1au works
 
 /** Orbit lines for Saturn's major moons (their 1980 orbits), drawn around Saturn every frame */
 export function createMoonOrbits(store: EngineStore) {
