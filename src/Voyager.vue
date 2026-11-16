@@ -939,7 +939,7 @@ import {
   type BaseTourStepContent,
 } from  "@cosmicds/vue-toolkit";
 
-import { VOYAGER_1_EVENTS, ONE_LIGHT_DAY, eventWindow, eventForTime, type MissionEvent } from "./voyagerEvents";
+import { VOYAGER_1_EVENTS, ONE_LIGHT_DAY, INTERSTITIAL_RATE, eventWindow, eventForTime, type MissionEvent } from "./voyagerEvents";
 
 interface TourStepContent extends BaseTourStepContent {
   event: MissionEvent;
@@ -975,11 +975,18 @@ const tour = useTour<TourStepContent>({
 urlState.track("tour", tour.stepID);
 
 import { watchThrottled } from "@vueuse/core";
+// the event whose rate is playing: an index, undefined between windows, null before the first one is set
+let rateStep: number | undefined | null = null;
 watchThrottled(() => store.currentTime, (newTime) => {
   if (!timePlaying.value) {
     return;
   }
   const step = eventForTime(VOYAGER_1_EVENTS, newTime);
+  // only set it when the step changes.
+  if (step !== rateStep) {
+    rateStep = step;
+    playbackRate.value = step === undefined ? INTERSTITIAL_RATE : (VOYAGER_1_EVENTS[step].rate ?? INTERSTITIAL_RATE);
+  }
   if (step !== undefined) {
     console.log(`time changed to ${newTime.toISOString()}, step ${step}`);
   }
