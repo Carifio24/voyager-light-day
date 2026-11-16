@@ -70,7 +70,7 @@ export function getHorizonsColumns(rawText: string): string[] {
 }
 
 /**
- * Throw, listing every problem, if a Horizons vector table can't be used here. It needs (see CLAUDE.md):
+ * Throw, listing every problem, if a Horizons vector table can't be used here. It needs:
  * a center body, the ecliptic of J2000 (REF_PLANE='ECLIPTIC'), au and days (OUT_UNITS='AU-D'), geometric states
  * (VEC_CORR='NONE'), and CSV rows (CSV_FORMAT='YES') starting JDTDB, Calendar Date (TDB), delta-T (VEC_DELTA_T='YES'),
  * X, Y, Z, between $$SOE and $$EOE.
