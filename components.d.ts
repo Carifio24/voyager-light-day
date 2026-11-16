@@ -17,6 +17,7 @@ declare module 'vue' {
     LightDayCountdown: typeof import('./src/components/LightDayCountdown.vue')['default']
     Loader: typeof import('./src/components/Loader.vue')['default']
     MissionTimeSlider: typeof import('./src/components/MissionTimeSlider.vue')['default']
+    PlanetScaleControl: typeof import('./src/components/PlanetScaleControl.vue')['default']
     SplashScreen: typeof import('./src/components/SplashScreen.vue')['default']
     TabbedSheet: typeof import('./src/components/TabbedSheet.vue')['default']
     TabPage: typeof import('./src/components/TabPage.vue')['default']
