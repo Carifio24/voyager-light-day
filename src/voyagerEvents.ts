@@ -38,7 +38,7 @@ export interface MissionEvent {
   rate?: number;
 }
 
-interface TimeRange {
+export interface TimeRange {
   start: Date;
   end: Date;
 }
@@ -47,9 +47,9 @@ const V1_LAUNCH: TimeRange = { start: new Date("1977-09-01T00:00:00Z"), end: new
 
 const V1_JUPITER_ENCOUNTER: TimeRange = {
   start: new Date("1979-03-03T00:00:00Z"),
-  end: new Date("1979-03-09T00:00:00Z"),
+  end: new Date("1979-03-06T20:00:00Z"),
 };
-const V1_SATURN_ENCOUNTER: TimeRange = {
+export const V1_SATURN_ENCOUNTER: TimeRange = {
   start: new Date("1980-11-11T00:00:00Z"),
   end: new Date("1980-11-14T00:00:00Z"),
 };
@@ -57,7 +57,7 @@ const V2_URANUS_ENCOUNTER: TimeRange = {
   start: new Date("1986-01-24T10:00:00Z"),
   end: new Date("1986-01-25T00:00:00Z"),
 };
-const V2_NEPTUNE_ENCOUNTER: TimeRange = {
+export const V2_NEPTUNE_ENCOUNTER: TimeRange = {
   start: new Date("1989-08-24T19:00:00Z"),
   end: new Date("1989-08-25T07:00:00Z"),
 };
@@ -132,7 +132,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
       zoom: 2.847799106383314,
       rotation: 0,
       angle: 0,
-      modelLogScale: 7,
+      modelLogScale: 5.64,
     },
   },
   {
@@ -160,7 +160,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
       zoom: 0.2100245670950015,
       rotation: 0,
       angle: 0,
-      modelLogScale: 7,
+      modelLogScale: 5.64,
     },
   },
   {
@@ -188,7 +188,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
       zoom: 0.006336824207632345,
       rotation: 0,
       angle: 0,
-      modelLogScale: 7,
+      modelLogScale: 5.64,
     },
     rate: 20_000,
   },

@@ -939,7 +939,7 @@ import {
   type BaseTourStepContent,
 } from  "@cosmicds/vue-toolkit";
 
-import { VOYAGER_1_EVENTS, ONE_LIGHT_DAY, INTERSTITIAL_RATE, eventWindow, eventForTime, type MissionEvent } from "./voyagerEvents";
+import { VOYAGER_1_EVENTS, ONE_LIGHT_DAY, INTERSTITIAL_RATE, V1_SATURN_ENCOUNTER, V2_NEPTUNE_ENCOUNTER, eventWindow, eventForTime, type MissionEvent, type TimeRange } from "./voyagerEvents";
 
 interface TourStepContent extends BaseTourStepContent {
   event: MissionEvent;
@@ -958,6 +958,9 @@ const tour = useTour<TourStepContent>({
     setup: async () => {
       store.waitForReady().then(() => {
         if (timePlaying.value) {
+          if (event.view) { // playback has the time and camera; only the model size follows the event
+            modelLogScale.value = event.view.modelLogScale;
+          }
           return;
         }
         if (event.view) {
@@ -975,25 +978,126 @@ const tour = useTour<TourStepContent>({
 urlState.track("tour", tour.stepID);
 
 import { watchThrottled } from "@vueuse/core";
-// the event whose rate is playing: an index, undefined between windows, null before the first one is set
-let rateStep: number | undefined | null = null;
 watchThrottled(() => store.currentTime, (newTime) => {
   if (!timePlaying.value) {
     return;
   }
   const step = eventForTime(VOYAGER_1_EVENTS, newTime);
-  // only set it when the step changes.
-  if (step !== rateStep) {
-    rateStep = step;
-    playbackRate.value = step === undefined ? INTERSTITIAL_RATE : (VOYAGER_1_EVENTS[step].rate ?? INTERSTITIAL_RATE);
-  }
-  if (step !== undefined) {
-    console.log(`time changed to ${newTime.toISOString()}, step ${step}`);
-  }
   if (step !== undefined && step !== tour.stepIndex.value) {
+    console.log(`time changed to ${newTime.toISOString()}, step ${step}`);
     tour.goToStep(step, true);
   }
 }, { throttle: 100 });
+
+// playback //
+// While playing, a frame callback sets the clock rate and the camera for wherever the clock is.
+const WINDOWS = VOYAGER_1_EVENTS.map((_, i) => eventWindow(VOYAGER_1_EVENTS, i)); // in date order
+const EASING_FRAMES = 30; // easing: a frame covers at most 1/EASING_FRAMES of the way to what's next
+const PALE_BLUE_DOT = VOYAGER_1_EVENTS.findIndex((e) => e.title === "Pale Blue Dot");
+const WIDE_VIEW = VOYAGER_1_EVENTS.find((e) => e.title === "Termination shock")!.view!;
+let currentStep: number | undefined | null = null; // the event the camera was set for: an index, undefined between windows, null to set it next frame
+let lastFrameMs: number | null = null; // wall time (performance.now) of the last frame while playing
+let secondsPerFrame = 1 / 60; // average frame length (wall time)
+
+/** sets the engine's rate now, so the next frame already runs at it. playbackRate mirrors it for the controls */
+function setClockRate(rate: number) {
+  if (rate !== playbackRate.value) {
+    store.setClockRate(rate);
+    playbackRate.value = rate;
+  }
+}
+
+/** averaged, so one slow frame doesn't jolt the rate */
+function updateSecondsPerFrame() {
+  const frameMs = performance.now();
+  if (lastFrameMs !== null) {
+    const thisFrame = (frameMs - lastFrameMs) / 1000;
+    secondsPerFrame = 0.9 * secondsPerFrame + 0.1 * thisFrame;
+  }
+  lastFrameMs = frameMs;
+}
+
+function eventRate(event: MissionEvent): number {
+  return event.rate ?? INTERSTITIAL_RATE;
+}
+
+/** the window `time` is in, or else the next one. undefined after the last */
+function getCurrentOrNextWindow(time: Date): TimeRange | undefined {
+  return WINDOWS.find((window) => time <= window.end);
+}
+
+/** the events whose time is in `window` (e.g. Jupiter closest approach and Io) */
+function getEventsInWindow(window: TimeRange): MissionEvent[] {
+  return VOYAGER_1_EVENTS.filter((e) => e.date >= window.start && e.date <= window.end);
+}
+
+/**
+ * Ease in and away from a target time. The rate is linear interpolation between
+ * them. Cap it between the slow and fast rates so it doesn't blow up far away. 
+ * The easing scale is the number of frames we want to ease in/out over.
+ */
+function rateRamp(time: Date, target: Date, slowRate: number, fastRate: number): number {
+  const secondsAway = Math.abs(target.getTime() - time.getTime()) / 1000;
+  const rate = secondsAway / (EASING_FRAMES * secondsPerFrame);
+  return Math.min(fastRate, Math.max(slowRate, rate));
+}
+
+/**
+ * get the playback rate for a given time. 
+ */
+function playbackRateAt(time: Date): number {
+  const window = getCurrentOrNextWindow(time);
+  
+  if (!window) { 
+    return INTERSTITIAL_RATE;
+  }
+  
+  // what events are in this window.
+  const events = getEventsInWindow(window);
+  
+  // get the highest valid rate
+  const fastestRateInWindow = Math.max(...events.map(eventRate));
+  // if before a window, ease in.
+  if (time < window.start) {
+    return rateRamp(time, window.start, fastestRateInWindow, INTERSTITIAL_RATE);
+  }
+  // each event can have it's own rate, we should be at the slowest one. 
+  const eventRatesForTime = events.map((e) => rateRamp(time, e.date, eventRate(e), fastestRateInWindow));
+  return Math.min(...eventRatesForTime);
+}
+
+/** the camera on the Voyager the story is about, backing out to the whole solar system at the Pale Blue Dot */
+function setCameraForStep(step: number | undefined, time: Date) {
+  if (step === PALE_BLUE_DOT) {
+    goToView({ ...WIDE_VIEW, time: time.toISOString() });
+  } else if (time < VOYAGER_1_EVENTS[PALE_BLUE_DOT].date) { // after it, stay wide
+    // Voyager 2 from the end of Voyager 1's Saturn encounter to the end of its own at Neptune
+    trackingCenter.value = time > V1_SATURN_ENCOUNTER.end && time < V2_NEPTUNE_ENCOUNTER.end ? "voyager2" : "voyager1";
+  }
+}
+
+function followEventsWhilePlaying() {
+  if (!timePlaying.value) {
+    currentStep = null;
+    lastFrameMs = null;
+    return;
+  }
+  updateSecondsPerFrame();
+  const now = SpaceTimeController.get_now();
+  setClockRate(playbackRateAt(now));
+
+  const step = eventForTime(VOYAGER_1_EVENTS, now);
+  if (step !== currentStep) { // only on a change, so a track picked by hand lasts until the next one
+    currentStep = step;
+    setCameraForStep(step, now);
+  }
+}
+store.waitForReady().then(() => store.addFrameCallback(followEventsWhilePlaying));
+watch(timePlaying, (playing) => {
+  if (playing) {
+    followEventsWhilePlaying(); // before the clock moves, or its first frame runs at the old rate
+  }
+});
 
 // On the last step the Next button becomes Close. TourSheet's Next calls
 // tour.next(), which in the toolkit is an unbounded stepIndex += 1, so the sheet
