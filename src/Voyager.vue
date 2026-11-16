@@ -613,6 +613,7 @@ const TRACK_ITEMS: { title: string; value: TrackTarget }[] = [
   { title: "Voyager 1", value: "voyager1" },
   { title: "Voyager 2", value: "voyager2" },
   ...SOLAR_SYSTEM_OBJECT_ITEMS,
+  { title: "Io", value: SolarSystemObjects.io },
 ];
 const trackingCenter = ref<TrackTarget>("voyager1");
 const { follow: followTrajectory } = useFollowTrajectory(VOYAGER_FRAME);
