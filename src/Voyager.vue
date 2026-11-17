@@ -1688,7 +1688,7 @@ body {
   padding: 6px 14px;
   text-align: center;
   background-color: var(--wwt-surface-background);
-  border-radius: 4px;
+  border-radius: 8px;
 
   .light-time-label {
     font-size: 14px;
@@ -1724,7 +1724,11 @@ body {
   flex-wrap: wrap-reverse;
   justify-content: center;
   background-color: var(--wwt-surface-background);
+  border-radius: 8px;
   padding-inline: 8px;
+  // 2px more on top: the time control has 2px of its own space under the rate line, so this centers
+  // the content. (The stacked tour layout below has its own top padding.)
+  padding-top: 10px;
   padding-bottom: 8px;
 }
 
@@ -1776,6 +1780,8 @@ body {
 
   &.in-tour {
     flex: 1 1 auto;
+    // the event slider is on top here, and its thumb already sits 6px down in its own box
+    padding-top: 4px;
   }
 
   #event-slider {
