@@ -20,12 +20,21 @@
         <p class="highlight">VOYAGER's</p>
         <p>Journey to</p>
         <p class="highlight">One light-day</p>
-        <div class="splash-countdown">
-          <p>
-            Voyager 1 is one light-day from Earth in
-            <LightDayCountdown :target="ONE_LIGHT_DAY" />
-          </p>
-        </div>
+        <!-- only until Voyager 1 reaches one light-day -->
+        <LightDayCountdown
+          v-slot="{ time, past }"
+          :target="ONE_LIGHT_DAY"
+        >
+          <div
+            v-if="!past"
+            class="splash-countdown"
+          >
+            <p>
+              Voyager 1 will reach one light-day from Earth in
+              <span class="light-day-countdown">{{ time }}</span>
+            </p>
+          </div>
+        </LightDayCountdown>
       </div>
     </SplashScreen>
 
@@ -235,26 +244,38 @@
                 hide-time
               />
             </div>
-            <icon-button
-              v-model="showCountdown"
-              class="sheet-toggle"
-              icon="alarm-clock"
-              aria-label="Countdown to one light-day"
-              :color="accentColor"
-              :focus-color="accentColor"
-              tooltip-text="Countdown to one light-day"
-              tooltip-location="start"
-              size="1x"
-              :v-focus-toggle="showCountdown"
-            />
-            <ClosableDialog
-              v-model="showCountdown"
-              title="Countdown"
-              max-width="320"
-            >
-              Voyager 1 is one light-day from Earth in
-              <LightDayCountdown :target="ONE_LIGHT_DAY" />
-            </ClosableDialog>
+            <!-- the countdown opens above its button, mirroring #frame-controls below the controls button -->
+            <div id="countdown-control">
+              <icon-button
+                v-model="showCountdown"
+                class="sheet-toggle"
+                :icon="showCountdown ? 'xmark' : 'alarm-clock'"
+                :aria-label="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
+                :color="accentColor"
+                :focus-color="accentColor"
+                :tooltip-text="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
+                tooltip-location="start"
+                size="1x"
+              />
+              <div
+                v-if="showCountdown"
+                id="countdown-panel"
+              >
+                <LightDayCountdown
+                  v-slot="{ time, past }"
+                  :target="ONE_LIGHT_DAY"
+                >
+                  <template v-if="past">
+                    Voyager 1 reached one light-day from Earth
+                    <span class="light-day-countdown">{{ time }}</span> ago
+                  </template>
+                  <template v-else>
+                    Voyager 1 will reach one light-day from Earth in
+                    <span class="light-day-countdown">{{ time }}</span>
+                  </template>
+                </LightDayCountdown>
+              </div>
+            </div>
           </div>
 
           <!-- credit logos $logo-credits.cds-bottom-credits -->
@@ -1243,19 +1264,41 @@ body {
 
 }
 
-#frame-controls {
+// the panels that open from the right-hand buttons
+#frame-controls,
+#countdown-panel {
   position: absolute;
-  top: calc(100% + 10px);
   right: 0;
-  pointer-events: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
   width: 260px;
   padding: 8px;
+  pointer-events: auto;
   background-color: black;
   border: 1px solid var(--accent-color);
   border-radius: 5px;
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.light-day-countdown {
+  font-weight: 600;
+}
+
+// holds the countdown button, so the panel can sit above it
+#countdown-control {
+  position: relative;
+}
+
+// above its button by the gap #frame-controls has below the controls button
+#countdown-panel {
+  bottom: calc(100% + 10px);
+  text-align: center;
+}
+
+#frame-controls {
+  top: calc(100% + 10px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 
   // the current track in gold, matching the selected item in the open menu (item-color)
   .v-select__selection-text {
