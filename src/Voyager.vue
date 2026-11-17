@@ -263,7 +263,7 @@
             <!-- play/pause + speed to the left of the timeline; below it on small screens (see CSS) -->
             <div
               id="timeline"
-              :class="{ 'in-tour': showTour }"
+              :class="{ 'in-tour': showTour, 'with-mission-slider': !showTour && !xs }"
             >
               <wwt-time-control
                 v-model="timePlaying"
@@ -280,6 +280,7 @@
               <!-- the whole mission, log in time since launch -->
               <MissionTimeSlider
                 v-if="!showTour"
+                v-show="!xs"
                 id="mission-slider"
                 :start="voyagerSpan.start"
                 :end="voyagerSpan.end"
@@ -1269,7 +1270,7 @@ function playbackRateAt(time: Date, backward = false): number {
   // what events are in this window.
   const events = getEventsInWindow(window);
   
-  const speedMultiplier = (showTour.value ? 1 : 2);
+  const speedMultiplier = (showTour.value ? 1 : 1);
 
   // get the highest valid rate
   const fastestRateInWindow = Math.max(...events.map(eventRate)) * speedMultiplier;
@@ -1806,27 +1807,33 @@ body {
   align-items: stretch;
   margin-inline: auto;
 
-  // no scrubbing on small screens: just the buttons (the date is in #light-time)
-  #mission-slider {
-    display: none;
-  }
-
   .wwt-clock-controls {
     flex-wrap: wrap;
     justify-content: center;
   }
 
-  &.in-tour {
+  // the mission slider stacks on top like the tour's, down to phone width (xs), where the template
+  // hides it: no scrubbing there, just the buttons (the date is in #light-time)
+  &.in-tour,
+  &.with-mission-slider {
     flex: 1 1 auto;
-    // the event slider is on top here, and its thumb already sits 6px down in its own box
+    // the slider is on top here, and its thumb already sits 6px down in its own box
     padding-top: 4px;
   }
 
+  #mission-slider,
   #event-slider {
     flex: 0 0 auto;
     // stacked here, so back to full width at its own height
     align-self: stretch;
     height: auto;
+  }
+
+  // but no wider than 500px, centered over the buttons
+  #mission-slider {
+    width: 100%;
+    max-width: 500px;
+    align-self: center;
   }
 }
 
