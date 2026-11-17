@@ -236,7 +236,7 @@
                 </div>
                 <div class="playback-rate-input">
                   <v-text-field
-                    v-model="playbackRate"
+                    v-model.number="playbackRate"
                     label="Playback rate (seconds per second)"
                     type="number"
                     density="compact"
