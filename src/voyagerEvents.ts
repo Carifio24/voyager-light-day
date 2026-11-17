@@ -166,8 +166,8 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     //   above Mt. Everest (on the night side of the planet at 25 degrees north
     //   latitude) when the picture was taken.`,
     caption: `On Sept 18, 1977, just 2 weeks after launch, 
-      Voyager 1 to this picture of a crescent-shaped Earth and Moon -- the 
-      first image of its kind ever taken or seen by humanity. Voyager 1 was 
+      Voyager 1 took this picture of a crescent-shaped Earth and Moon, the
+      first of its kind ever taken by a spacecraft. Voyager 1 was
       7.25 million miles (11.66 million kilometers) from Earth when it captured this image.`,
     
     date: new Date("1977-09-18T22:20:00Z"),
@@ -194,7 +194,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
   {
     title: "Jupiter closest approach",
     caption: `Voyager 1 took this photo of Jupiter and two of its moons
-      (Io, left, and Europa) on Feb. 13, 1979, a couple weeks before it made it's closest approach to Jupiter. 
+      (Io, left, and Europa) on Feb. 13, 1979, a couple of weeks before it made its closest approach to Jupiter.
       Just behind Io, you can see Jupiter's "Great Red Spot", which Voyager discovered was a massive storm! Although both
       satellites have about the same brightness, Io's color is very different
       from Europa's indicating different histories and compositions.`,
@@ -225,7 +225,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
       about 11 hours before closest approach to the Jupiter moon. An enormous volcanic
       explosion can be seen silhouetted against dark space on the edge of Io. The volcanic plumes were first 
       discovered in Voyager 1's images by Linda Morabito at JPL. Io was our first
-      direct ovservation of active volcanos beyond the Earth.`,
+      direct observation of active volcanoes beyond the Earth.`,
     date: new Date("1979-03-05T15:14:00Z"),
     image: io,
     imageUrl: "https://science.nasa.gov/photojournal/volcanic-explosion-on-io/",
@@ -279,7 +279,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     caption: `Possible variations in chemical composition from one part of
       Saturn's ring system to another are visible in this Voyager 2 picture as
       subtle color variations. In this enhanced color view the more water-rich a region is the more blue it appears. 
-      Voyager 1 made similar observations during its flyby of Saturn`,
+      Voyager 1 made similar observations during its flyby of Saturn.`,
     date: new Date("1980-11-12T23:46:00Z"),
     image: saturn,
     imageUrl: "https://science.nasa.gov/photojournal/composition-differences-within-saturns-rings/",
@@ -301,11 +301,11 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     rate: 10_000,
   },
   {
-    title: "Voyager 2 Continues the Grand Tour",
-    caption: `Because Voyager 1 was instructed to fly by Saturn's moon Titan, it 
+    title: "Voyager 2 continues the Grand Tour",
+    caption: `Because Voyager 1 was instructed to fly by Saturn's moon Titan, it
       could not continue on to Uranus and Neptune. Voyager 2, which launched
-      about 2 weeks before Voyager 1 was able to continue on to Uranus and Neptune. 
-      It is still the only spacecraft to have visited these two outer planets`,
+      about 2 weeks before Voyager 1, was able to continue on to Uranus and Neptune.
+      It is still the only spacecraft to have visited these two outer planets.`,
     date: V1_SATURN_ENCOUNTER.end,
     image: trajectory,
     imageUrl:
@@ -376,9 +376,9 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     title: "Pale Blue Dot",
     noSlider: true,
     caption: `This image shows an updated version of the iconic Pale Blue Dot
-      image taken by the Voyager 1 spacecraft. Planet Earth is visible as a
+      image taken by the Voyager 1 spacecraft, at the suggestion of Carl Sagan. Planet Earth is visible as a
       bright speck within the sunbeam just right of center and appears softly
-      blue, as in the original version published in 1990 (see PIA00452).`,
+      blue, as in the original version published in 1990`,
     date: new Date("1990-02-14T04:48:00Z"),
     image: paleBlueDot,
     imageUrl: "https://science.nasa.gov/photojournal/pale-blue-dot-revisited/",
@@ -477,7 +477,7 @@ export const LIGHT_DAY_INTRO: MissionEvent = {
   // TODO: placeholder title and caption, to be written
   title: "One Light Day Milestone!",
   noSlider: true,
-  caption: `On November 18, 2026, 10:16 UT, NASA’s beloved Voyager 1 spacecraft will reach an extraordinary milestone of one light day from Earth—a distance so vast (16 billion miles!) that a message traveling at the speed of light takes a full 24 hours to reach us.`,
+  caption: `On November 18, 2026, 10:16 UT, NASA’s beloved Voyager 1 spacecraft will reach an extraordinary milestone of one light-day from Earth—a distance so vast (16 billion miles!) that a message traveling at the speed of light takes a full 24 hours to reach us.`,
   date: ONE_LIGHT_DAY,
   image: celebrate,
   credit: "Devika Elakara (Diagram NOT to scale!)",
