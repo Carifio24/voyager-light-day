@@ -299,9 +299,12 @@
               <MissionTimeSlider
                 v-else
                 id="event-slider"
+                :class="{ 'outside-step': outsideStepWindow }"
+                :inert="outsideStepWindow"
                 :start="stepWindow.start"
                 :end="stepWindow.end"
                 :step-ms="SLIDER_STEP_MS"
+                color="tour-accent"
                 hide-time
               />
             </div>
@@ -381,8 +384,8 @@
         tabindex="-1"
         :tour="tourSheetTour"
         :small-size="false"
-        :accent-color="accentColor"
-        :border-color="borderColor"
+        :accent-color="tourAccentColor"
+        :border-color="tourAccentColor"
         background-color="black"
         show-next-on-last-step
         :next-text="onLastStep ? 'Close' : 'Next'"
@@ -624,7 +627,8 @@ const theme = useTheme();
 // can access them directly as `color="primary" on the prop, and they are aleady available in the CSS as --v-theme-primary and --v-theme-secondary
 const accentColor = computed(() => theme.current.value.colors.primary);
 const accentColor2 = computed(() => theme.current.value.colors.secondary);
-const borderColor = computed(() => theme.current.value.colors.primary);
+// lavender, for the tour: its sheet and its step slider
+const tourAccentColor = computed(() => theme.current.value.colors["tour-accent"]);
 
 const { xs } = useDisplay();
 
@@ -1331,6 +1335,13 @@ const stepWindow = computed(() => {
   };
 });
 
+// the clock is between stops (as it is while playing from one to the next), where the step's slider would
+// sit pinned at an end: it fades out until the clock reaches a stop again
+const outsideStepWindow = computed(() => {
+  const t = store.currentTime.getTime();
+  return t < stepWindow.value.start.getTime() || t > stepWindow.value.end.getTime();
+});
+
 // Set by the last step's Close, so the next Show Tour starts over at the first
 // step. The X keeps resuming where you left off. Not reset at close time,
 // since changing the step runs its setup and would move the clock and camera
@@ -1713,6 +1724,15 @@ body {
   height: 35px;
 }
 
+// between tour stops (see outsideStepWindow). It keeps its space, so the timeline doesn't shift
+#event-slider {
+  transition: opacity 0.4s;
+
+  &.outside-step {
+    opacity: 0;
+  }
+}
+
 // small screens: controls go under the timeline. column-reverse keeps the DOM
 // (and tab) order the same as on large screens, so tab order is controls -> slider here
 // controls keep their natural width, centered; no side margin, since at phone width the
@@ -1844,12 +1864,14 @@ body {
   overflow: hidden;
 }
 
-/* why-roman's Back/Next: a dark fill with an accent outline, rather than the
-   toolkit's solid accent fill. !important because Vuetify sets a hex
-   `color` prop as inline background and text colors. */
+/* Back/Next: gold with black text, though the rest of the tour sheet is lavender
+   (its accent color). The border too, which would otherwise be the lavender
+   accent. !important because Vuetify sets a hex `color` prop as inline
+   background and text colors. */
 .tour-sheet .tour-text-controls .v-btn {
-  background-color: rgb(var(--v-theme-secondary)) !important;
-  color: white !important;
+  background-color: rgb(var(--v-theme-primary)) !important;
+  border-color: rgb(var(--v-theme-primary)) !important;
+  color: black !important;
 }
 
 /* The empty dividers between the step dots were 16px each (Vuetify's
