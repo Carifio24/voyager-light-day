@@ -1,6 +1,7 @@
 <!-- The User Guide page content. Wrap in TabPage to show it as a tab in TabbedSheet. -->
 <template>
-  <div class="d-flex flex-column fill-height">
+  <div class="d-flex flex-column fill-height user-guide">
+    This app is powered by <easyLink href="https://worldwidetelescope.org/home">WorldWide Telescope</easyLink>
     <h4 class="user-guide-header mt-2">Sky Navigation</h4>
     <p>To navigate the WWT view, use the following controls:</p>
     <v-row
@@ -77,20 +78,19 @@
         <div class="credits">
           <h4 class="user-guide-header mt-3">Credits</h4>
           <h5>
-            <easyLink href="https://www.cosmicds.cfa.harvard.edu/">Science Reference</easyLink>
+            <easyLink href="https://www.cosmicds.cfa.harvard.edu/">Technical Note</easyLink>
           </h5>
-          <p>Science PI</p>
-          <p>Data and Catalog References.</p>
+          <p>Paths for Voyager 1, Voyager 2, Titan, and Miranda are created from <easyLink href="https://ssd.jpl.nasa.gov/horizons/">JPL Horizons Vector Tables</easyLink>.</p>
           <h5>
-            <easyLink href="https://www.cosmicds.cfa.harvard.edu/">CosmicDS</easyLink>
+            <easyLink href="https://www.cosmicds.cfa.harvard.edu/">CosmicDS Team</easyLink>
           </h5>
+          <p>John Lewis</p>
           <p>Pat Udomprasert</p>
           <p>Jon Carifio</p>
-          <p>John Lewis</p>
           <p>Alyssa Goodman</p>
 
           <h5>
-            <easyLink href="https://www.worldwidetelescope.org/home">WorldWide Telescope</easyLink>
+            <easyLink href="https://www.worldwidetelescope.org/home">WorldWide Telescope Team</easyLink>
           </h5>
           <p>Jon Carifio</p>
           <p>David Weigel</p>
@@ -123,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { h, type SetupContext } from "vue";
+import { h, type SetupContext, toRefs } from "vue";
 import { FundingAcknowledgement } from "@cosmicds/vue-toolkit";
 import { useAppLayout } from "../composables/useAppLayout";
 
@@ -132,12 +132,15 @@ const easyLink = (props: { href: string }, { slots }: SetupContext) => {
   return h("a", { href: props.href, target: "_blank", rel: "noopener" }, slots.default?.());
 };
 
-const { touchscreen } = useAppLayout();
+const { touchscreen } = toRefs(useAppLayout());
 
 const emit = defineEmits<(e: "change-privacy-settings") => void>();
 </script>
 
 <style scoped>
+.user-guide {
+  font-size: 0.9em;
+}
 /* the gap under the credits, so the last line clears the bottom of the sheet */
 .end-spacer {
   height: 25px;

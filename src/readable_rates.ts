@@ -23,7 +23,8 @@ const unitName: Record<string, Record<"long" | "short", string>> = {
 };
 
 export function niceRate(rate, decimalPlaces = 1) {
-  if (rate < 120) {
+
+  if (Math.abs(rate) < 120) {
     return `${rate} x`;
   }
 
