@@ -456,7 +456,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     title: "One light-day from Earth",
     noSlider: true,
     caption: `Voyager 1 has entered interstellar space. NASA's spacecraft, which
-      rose from Earth on a September morning 36 years ago, has traveled farther
+      rose from Earth on a September morning nearly 50 years ago, has traveled farther
       than anyone, or anything, in history.`,
     date: ONE_LIGHT_DAY,
     image: lightDay,
