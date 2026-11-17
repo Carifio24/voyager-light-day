@@ -273,6 +273,7 @@
               <wwt-time-control
                 v-model="timePlaying"
                 v-model:rate="playbackRate"
+                v-model:reverse="playbackReversed"
                 hide-time-input
                 hide-set-time
                 hide-status
@@ -939,12 +940,27 @@ function updateVoyagerLightTime() {
 }
 
 const timePlaying = ref(false);
-const playbackRate = ref(1000); // 1000x real time
+const playbackSpeed = ref(1000); // 1000x real time
+const playbackReversed = ref(false); // the speed control's reverse button
+// what the controls show: the speed, negative when reversed. Setting it sets the speed; only the reverse button flips it
+const playbackRate = computed({
+  get: () => (playbackReversed.value ? -1 : 1) * playbackSpeed.value,
+  set: (rate: number) => {
+    playbackSpeed.value = Math.abs(rate);
+  },
+});
 
 function stopAtEnd() {
   if (timePlaying.value && SpaceTimeController.get_now() > voyagerSpan.end) {
     timePlaying.value = false;
     store.setTime(new Date(voyagerSpan.end.getTime() - 1000));
+  }
+}
+
+function stopAtStart() {
+  if (timePlaying.value && SpaceTimeController.get_now() <= voyagerSpan.start) {
+    timePlaying.value = false;
+    store.setTime(new Date(voyagerSpan.start.getTime() + 1000));
   }
 }
 
@@ -986,6 +1002,7 @@ function setUpVoyagerScene() {
     updateVoyagerLightTime();
     voyager1Location.value = voyager1PositionAt(time);
     voyager2Location.value = voyager2PositionAt(time);
+    stopAtStart();
     stopAtEnd();
   });
   useThreeModel(store, glbUrl, renderThree, (model) => (voyager1Model = model));
@@ -1160,8 +1177,11 @@ function eventRate(event: MissionEvent): number {
   return event.rate ?? INTERSTITIAL_RATE;
 }
 
-/** the window `time` is in, or else the next one. undefined after the last */
-function getCurrentOrNextWindow(time: Date): TimeRange | undefined {
+/** the window `time` is in, or else the next one in the direction of play. undefined past the last */
+function getCurrentOrNextWindow(time: Date, backward: boolean): TimeRange | undefined {
+  if (backward) {
+    return [...WINDOWS].reverse().find((window) => time >= window.start);
+  }
   return WINDOWS.find((window) => time <= window.end);
 }
 
@@ -1184,8 +1204,8 @@ function rateRamp(time: Date, target: Date, slowRate: number, fastRate: number):
 /**
  * get the playback rate for a given time.
  */
-function playbackRateAt(time: Date): number {
-  const window = getCurrentOrNextWindow(time);
+function playbackRateAt(time: Date, backward = false): number {
+  const window = getCurrentOrNextWindow(time, backward);
 
   if (!window) {
     return INTERSTITIAL_RATE;
@@ -1193,15 +1213,17 @@ function playbackRateAt(time: Date): number {
 
   // what events are in this window.
   const events = getEventsInWindow(window);
+  
+  const speedMultiplier = (showTour.value ? 1 : 2);
 
   // get the highest valid rate
-  const fastestRateInWindow = Math.max(...events.map(eventRate));
-  // if before a window, ease in.
-  if (time < window.start) {
-    return rateRamp(time, window.start, fastestRateInWindow, INTERSTITIAL_RATE);
+  const fastestRateInWindow = Math.max(...events.map(eventRate)) * speedMultiplier;
+  // if before a window (after it, going backward), ease in.
+  if (backward ? time > window.end : time < window.start) {
+    return rateRamp(time, backward ? window.end : window.start, fastestRateInWindow, INTERSTITIAL_RATE);
   }
   // each event can have it's own rate, we should be at the slowest one.
-  const eventRatesForTime = events.map((e) => rateRamp(time, e.date, eventRate(e), fastestRateInWindow));
+  const eventRatesForTime = events.map((e) => rateRamp(time, e.date, eventRate(e) * speedMultiplier, fastestRateInWindow));
   return Math.min(...eventRatesForTime);
 }
 
@@ -1239,9 +1261,15 @@ function followEventsWhilePlaying() {
   }
   updateSecondsPerFrame();
   const now = SpaceTimeController.get_now();
-  setClockRate(playbackRateAt(now));
-
+  const backward = playbackReversed.value;
+  setClockRate((backward ? -1 : 1) * playbackRateAt(now, backward));
+  
   const step = eventForTime(VOYAGER_1_EVENTS, now);
+  
+  // if not in tour - don't do tour things
+  if (!showTour.value) {
+    return;
+  }
   if (step !== undefined && step !== tour.stepIndex.value) {
     tour.goToStep(step, true);
   }
