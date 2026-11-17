@@ -23,7 +23,7 @@
           :src="image"
           :alt="title"
         />
-        <figcaption class="event-credit">
+        <figcaption class="event-credit mb-2">
           <a
             v-if="imageUrl"
             :href="imageUrl"
