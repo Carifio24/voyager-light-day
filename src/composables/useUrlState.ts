@@ -1,20 +1,17 @@
-
-import { watch, ref } from 'vue';
-import type { Ref } from 'vue';
-
-
+import { watch, ref } from "vue";
+import type { Ref } from "vue";
 
 export interface UseUrlStateOptions {
-    autoUpdate?: boolean;
-    inAddressBar?: boolean;
-    clearOnLoad?: boolean;
+  autoUpdate?: boolean;
+  inAddressBar?: boolean;
+  clearOnLoad?: boolean;
 }
 
 export interface UseUrlState {
-    track: (key: string, value: Ref) => void;
-    getUrl(): string;
-    loadedFromUrl: Ref<string[]>;
-    get(key: string): string | undefined;
+  track: (key: string, value: Ref) => void;
+  getUrl(): string;
+  loadedFromUrl: Ref<string[]>;
+  get(key: string): string | undefined;
 }
 
 /** 
@@ -22,28 +19,26 @@ export interface UseUrlState {
 
 */
 export function useUrlState(options: UseUrlStateOptions): UseUrlState {
-    
   const initialUrl = window.location.href;
   const initialUrlParams = new URL(initialUrl).searchParams;
   const loadedFromUrl = ref<string[]>([]);
-  
+
   if (options.clearOnLoad) {
     const url = new URL(initialUrl);
-    url.search = '';
-    window.history.replaceState({}, '', url.toString());
+    url.search = "";
+    window.history.replaceState({}, "", url.toString());
   }
-  
+
   const trackedValues = new Map<string, Ref>();
-  
+
   function updateUrlParam(key: string, value: unknown) {
     const url = new URL(window.location.href);
     url.searchParams.set(key, `${value}`);
     if (options.inAddressBar) {
-      window.history.replaceState({}, '', url.toString());
+      window.history.replaceState({}, "", url.toString());
     }
-  };
-  
-  
+  }
+
   function track(key: string, value: Ref) {
     // let's keep track of the value. always up to date, cuz it's a ref
     if (!trackedValues.has(key)) {
@@ -61,8 +56,8 @@ export function useUrlState(options: UseUrlStateOptions): UseUrlState {
       return;
     }
     console.warn(`Key ${key} is already being tracked.`);
-  };
-  
+  }
+
   function get(key: string): string | undefined {
     const valueRef = trackedValues.get(key);
     if (valueRef) {
@@ -75,8 +70,8 @@ export function useUrlState(options: UseUrlStateOptions): UseUrlState {
       }
     }
     return undefined;
-  };
-  
+  }
+
   /* get url with tracked state values */
   const getUrl = (): string => {
     const url = new URL(window.location.href);
@@ -85,15 +80,11 @@ export function useUrlState(options: UseUrlStateOptions): UseUrlState {
     });
     return url.toString();
   };
-  
-  
 
   return {
     track,
     getUrl,
     loadedFromUrl,
-    get
+    get,
   };
-    
-    
 }

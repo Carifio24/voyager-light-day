@@ -12,7 +12,6 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     ClosableDialog: typeof import('./src/components/ClosableDialog.vue')['default']
-    FollowTrajectoryButton: typeof import('./src/components/FollowTrajectoryButton.vue')['default']
     ImageCrossfadeSlider: typeof import('./src/components/ImageCrossfadeSlider.vue')['default']
     LightDayCountdown: typeof import('./src/components/LightDayCountdown.vue')['default']
     Loader: typeof import('./src/components/Loader.vue')['default']

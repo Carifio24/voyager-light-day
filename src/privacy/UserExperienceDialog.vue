@@ -69,9 +69,12 @@ const emit = defineEmits<{
 
 // start back at the teaser each time the prompt is (re)shown
 const expanded = ref(false);
-watch(() => props.showRating, (show) => {
-  if (show) expanded.value = false;
-});
+watch(
+  () => props.showRating,
+  (show) => {
+    if (show) expanded.value = false;
+  },
+);
 </script>
 
 <style lang="less">
@@ -87,25 +90,24 @@ watch(() => props.showRating, (show) => {
   // width: fit-content !important;
   // background-color: rgb(var(--v-theme-background)) !important;
   // z-index: 20000;
-  
+
   .v-card-item {
     padding: 0px;
   }
 
   .rating-title {
-    color: #EFEFEF;
+    color: #efefef;
     font-size: 0.7em;
-    
+
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     gap: 5px;
-    
+
     .v-spacer {
       display: none;
     }
-    
   }
 
   .rating-icon-row {
@@ -135,12 +137,12 @@ watch(() => props.showRating, (show) => {
     display: flex;
     flex-direction: row;
     gap: 5px;
-    
+
     .v-btn {
       text-transform: none;
     }
     .v-btn--variant-outlined {
-      border-color: rgba(var(--v-theme-on-background), .5);
+      border-color: rgba(var(--v-theme-on-background), 0.5);
     }
   }
 }
@@ -159,13 +161,13 @@ watch(() => props.showRating, (show) => {
   transition: padding 0.2s ease;
 
   .user-experience-teaser-text {
-    color: #EFEFEF;
+    color: #efefef;
     font-size: 0.8em;
     line-height: 1.3;
     text-align: center;
     cursor: pointer;
   }
-  
+
   &:hover {
     padding-bottom: calc(0.3em + 20px);
   }

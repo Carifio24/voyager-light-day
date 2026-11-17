@@ -2,7 +2,11 @@
   <v-app
     id="app"
     :style="cssVars"
-    :class="[smallSize ? 'app-is-small' : '', kiosk ? 'kiosk' : '', drawerOpen && !sidePanel ? 'bottom-drawer-open' : '']"
+    :class="[
+      smallSize ? 'app-is-small' : '',
+      kiosk ? 'kiosk' : '',
+      drawerOpen && !sidePanel ? 'bottom-drawer-open' : '',
+    ]"
   >
     <webgl-test @webgl2-disabled="showWebGL2Warning = true" />
 
@@ -40,7 +44,8 @@
 
     <v-main>
       <div id="main-content">
-
+        <WorldWideTelescope :wwt-namespace="wwtNamespace"></WorldWideTelescope>
+        <!-- should go after <world-wide-telescope /> -->
         <wwt-tracked-content
           :store="store"
           :position="voyager1Location"
@@ -51,7 +56,7 @@
             class="voyager-label"
             :style="`color: ${VOYAGER_1_COLOR}`"
           >
-              <strong>Voyager 1</strong>
+            <strong>Voyager 1</strong>
           </p>
         </wwt-tracked-content>
 
@@ -65,17 +70,17 @@
             class="voyager-label"
             :style="`color: ${VOYAGER_2_COLOR}`"
           >
-              <strong>Voyager 2</strong>
+            <strong>Voyager 2</strong>
           </p>
         </wwt-tracked-content>
-
-        <WorldWideTelescope :wwt-namespace="wwtNamespace"></WorldWideTelescope>
         <wwt-loader v-model="isLoading" />
 
         <!-- This block contains the elements (e.g. icon buttons displayed at/near the top of the screen) -->
 
-        <div v-show="!showSplashScreen" id="wwt-overlay">
-
+        <div
+          v-show="!showSplashScreen"
+          id="wwt-overlay"
+        >
           <div id="top-content">
             <div id="left-buttons">
               <icon-button
@@ -237,10 +242,18 @@
                     hide-details
                   />
                 </div>
+                <div class="playback-rate-input">
+                  <v-text-field
+                    v-model.number="playbackRate"
+                    label="Playback rate (seconds per second)"
+                    type="number"
+                    density="compact"
+                    hide-details
+                  />
+                </div>
               </div>
             </div>
           </div>
-
 
           <!-- <v-btn
             density="compact"
@@ -259,6 +272,7 @@
             >
               <wwt-time-control
                 v-model="timePlaying"
+                v-model:rate="playbackRate"
                 hide-time-input
                 hide-set-time
                 hide-status
@@ -376,7 +390,12 @@
             :pds-url="step.event.pdsUrl"
             :opus-url="step.event.opusUrl"
             @close="showTour = false"
-            @go-to-view="step.event.view && goToView(step.event.view)"
+            @go-to-view="
+              () => {
+                timePlaying = false;
+                if (step.event.view) goToView(step.event.view);
+              }
+            "
           >
             <p
               v-for="(paragraph, i) in step.text"
@@ -421,7 +440,10 @@
         <!-- the user guide is an <TabPage title="User Guide" value="user-guide>...</TabPage>"
          it can be userful to move complex content into a separate component
          -->
-        <tab-page title="User Guide" value="user-guide">
+        <tab-page
+          title="User Guide"
+          value="user-guide"
+        >
           <user-guide @change-privacy-settings="showPrivacyPolicyInfo = true" />
         </tab-page>
       </tabbed-sheet>
@@ -496,15 +518,15 @@
       :question="question"
       @dismiss="dismissRating"
       @rating="(rating) => updateUserExperienceInfo(rating, null)"
-      @finish="(rating, comment) => {
-        updateUserExperienceInfo(rating, comment);
-        showRating = false;
-      }"
+      @finish="
+        (rating, comment) => {
+          updateUserExperienceInfo(rating, comment);
+          showRating = false;
+        }
+      "
       @opt-out="optOutRating"
       @what-is-this="showPrivacyPolicyInfo = true"
     />
-
-
 
     <v-slide-y-transition>
       <DataCollectionOptOutFooter
@@ -521,12 +543,7 @@ import { ref, shallowRef, computed, onMounted, watch, nextTick } from "vue";
 import type { StyleValue } from "vue";
 import { WWTControl } from "@wwtelescope/engine";
 import { WWTComponent as WorldWideTelescope, engineStore } from "@wwtelescope/engine-pinia";
-import {
-  useWWTKeyboardControls,
-  useFullscreen,
-  IconButton,
-  CreditLogos,
-} from "@cosmicds/vue-toolkit";
+import { useWWTKeyboardControls, useFullscreen, IconButton, CreditLogos } from "@cosmicds/vue-toolkit";
 
 const extraLogos = [
   {
@@ -591,7 +608,7 @@ function toggleInfoSheetTab(tabValue: string) {
 import { useAppLayout } from "./composables/useAppLayout";
 const { smallSize, sidePanel, viewportWidth } = useAppLayout();
 const DRAWER_WIDTH_FRACTION = 34; // 34% of the viewport width
-const drawerWidth = computed(() => Math.round(viewportWidth.value * DRAWER_WIDTH_FRACTION / 100.));
+const drawerWidth = computed(() => Math.round((viewportWidth.value * DRAWER_WIDTH_FRACTION) / 100));
 
 import { useTheme, useDisplay } from "vuetify";
 const theme = useTheme();
@@ -610,7 +627,6 @@ const cssVars = computed(() => {
     "--accent-color-2": accentColor2.value,
     "--drawer-width": `${DRAWER_WIDTH_FRACTION}vw`,
     "--drawer-bottom-height": "40vh",
-
   } as StyleValue;
 });
 
@@ -732,8 +748,9 @@ function createVoyagerOrbit() {
 }
 
 function createVoyagerLayer() {
-  createMovingMarkerLayer(store, "Voyager 2", VOYAGER_FRAME, VOYAGER_2_COLOR, voyager2PositionAt, true)
-    .then((layer) => (voyager2Layer.value = layer));
+  createMovingMarkerLayer(store, "Voyager 2", VOYAGER_FRAME, VOYAGER_2_COLOR, voyager2PositionAt, true).then(
+    (layer) => (voyager2Layer.value = layer),
+  );
   createMovingMarkerLayer(store, "Voyager 1", VOYAGER_FRAME, VOYAGER_1_COLOR, voyager1PositionAt, true).then(
     (layer) => (voyager1Layer.value = layer),
   );
@@ -741,7 +758,7 @@ function createVoyagerLayer() {
 
 // time sliders: the whole file, in 1 minute steps
 const voyagerSpan = voyager2Table.timeSpan; // voyager 2 is longer
-voyagerSpan.end = new Date('Dec 31 2026 23:59:59 UTC'); // Cut off time after 2026. 
+voyagerSpan.end = new Date("Dec 31 2026 23:59:59 UTC"); // Cut off time after 2026.
 const SLIDER_STEP_MS = 60 * 1000;
 
 import * as THREE from "three";
@@ -760,9 +777,9 @@ const showVoyagerModels = ref(true);
 
 function setMaximumZoomForView(tc: TrackTarget, scale: number) {
   if (tc === "voyager1" || tc === "voyager2") {
-    const modelSize = MODEL_REAL_SIZE_METERS * 10**scale; // 31 m at logs scale = 0.
+    const modelSize = MODEL_REAL_SIZE_METERS * 10 ** scale; // 31 m at logs scale = 0.
     const VIEW_MULTIPLIER = 1; // about how many times larger than the model should the view be
-    setZoomMin(VIEW_MULTIPLIER * modelSize / METERS_PER_AU);
+    setZoomMin((VIEW_MULTIPLIER * modelSize) / METERS_PER_AU);
   } else {
     setZoomMin(null); // null sets to default min zoom which is 0.00006
   }
@@ -788,7 +805,42 @@ function _logView() {
 
 addToWindow("logView", _logView);
 
+import { Planets, Vector3d } from "@wwtelescope/engine";
+import { flyCamera } from "./wwt-hacks";
+const FLY_SECONDS = 4;
+
+/** where the camera's viewTarget is for a track at a time (au, x, z, y). null outside a Voyager's data */
+function viewTargetAt(track: TrackTarget, lat: number, lng: number, time: Date): Vector3d | null {
+  if (typeof track !== "string") {
+    return Planets.getPlanetTargetPoint(track, lat, lng, SpaceTimeController.utcToJulian(time)); // as RenderContext.setupMatricesSolarSystem, at `time`
+  }
+  const v = VOYAGER_TRAJECTORIES[track](time.getTime());
+  if (!v) {
+    return null;
+  }
+  const origin = Planets.getPlanet3dLocation(VOYAGER_FRAME); // as useFollowTrajectory does
+  return Vector3d.create(v.x + origin.x, v.z + origin.y, v.y + origin.z);
+}
+
+/** fly the camera and the clock to a view. `to` is built like WWTControl.gotoTarget's camTo */
+function flyToView(view: ViewSpec) {
+  const end = new Date(view.time);
+  const to = WWTControl.singleton.renderContext.viewCamera.copy();
+  to.lat = view.lat;
+  to.lng = view.lng;
+  to.zoom = view.zoom;
+  to.rotation = view.rotation;
+  to.angle = view.angle;
+  to.target = typeof view.track === "string" ? SolarSystemObjects.undefined : view.track; // 65536: what Follow tracks
+  to.viewTarget = viewTargetAt(view.track, view.lat, view.lng, end) ?? to.viewTarget;
+  // before the track changes: the zoom-floor watcher renders a frame, which would snap to the new target
+  flyCamera(to, FLY_SECONDS, end);
+  trackingCenter.value = view.track;
+  modelLogScale.value = view.modelLogScale;
+}
+
 async function goToView(view: ViewSpec, instant = false) {
+  WWTControl.singleton.renderContext.viewMover = null; // stop a flight still under way, or it lands on its own view
   trackingCenter.value = view.track;
   modelLogScale.value = view.modelLogScale;
   store.setTime(new Date(view.time));
@@ -830,7 +882,10 @@ function setVoyager1ModelPosition(time: Date) {
   }
   const origin = bodyCenterInScene(VOYAGER_FRAME);
   voyager1Model.position.set(p.x + origin.x, p.y + origin.z, p.z + origin.y);
-  voyager1Model.quaternion.setFromUnitVectors(DISH_AXIS, directionTo(SolarSystemObjects.earth, voyager1Model.position, dish));
+  voyager1Model.quaternion.setFromUnitVectors(
+    DISH_AXIS,
+    directionTo(SolarSystemObjects.earth, voyager1Model.position, dish),
+  );
   const scale = 10 ** modelLogScale.value;
   voyager1Model.scale.setScalar(scale / METERS_PER_AU);
 }
@@ -847,7 +902,10 @@ function setVoyager2ModelPosition(time: Date) {
   }
   const origin = bodyCenterInScene(VOYAGER_FRAME);
   voyager2Model.position.set(p.x + origin.x, p.y + origin.z, p.z + origin.y);
-  voyager2Model.quaternion.setFromUnitVectors(DISH_AXIS, directionTo(SolarSystemObjects.earth, voyager2Model.position, dish));
+  voyager2Model.quaternion.setFromUnitVectors(
+    DISH_AXIS,
+    directionTo(SolarSystemObjects.earth, voyager2Model.position, dish),
+  );
   const scale = 10 ** modelLogScale.value;
   voyager2Model.scale.setScalar(scale / METERS_PER_AU);
 }
@@ -881,6 +939,7 @@ function updateVoyagerLightTime() {
 }
 
 const timePlaying = ref(false);
+const playbackRate = ref(1000); // 1000x real time
 
 function stopAtEnd() {
   if (timePlaying.value && SpaceTimeController.get_now() > voyagerSpan.end) {
@@ -950,9 +1009,11 @@ const gtagConsent = useGtagConsent(true);
 
 /** app tracking setup */
 const STORY_NAME = "voyager" as const;
-const appTime = createTrackingTimer({active: ref(true)});
+const appTime = createTrackingTimer({ active: ref(true) });
 const missionSliderUses = createTrackingCounter();
-const userGuideTime = createTrackingTimer({active: computed(() => showTextSheet.value && infoSheetTab.value === "user-guide")});
+const userGuideTime = createTrackingTimer({
+  active: computed(() => showTextSheet.value && infoSheetTab.value === "user-guide"),
+});
 
 function resetTrackingData() {
   appTime.reset();
@@ -1001,9 +1062,7 @@ const {
 } = useUserExperienceRating(STORY_NAME, userID, {
   responseOptOut,
   timeout: 45_000,
-  questions: [
-    "How do you like this app?",
-  ],
+  questions: ["How do you like this app?"],
   mixin: false,
 });
 
@@ -1013,13 +1072,19 @@ const showRatingDialog = computed(() => showRating.value && !showSplashScreen.va
 // tour setup //
 const showTour = ref(false);
 
-import {
-  TourSheet,
-  useTour,
-  type BaseTourStepContent,
-} from  "@cosmicds/vue-toolkit";
+import { TourSheet, useTour, type BaseTourStepContent } from "@cosmicds/vue-toolkit";
 
-import { VOYAGER_1_EVENTS, ONE_LIGHT_DAY, eventWindow, type MissionEvent } from "./voyagerEvents";
+import {
+  VOYAGER_1_EVENTS,
+  ONE_LIGHT_DAY,
+  INTERSTITIAL_RATE,
+  V1_SATURN_ENCOUNTER,
+  V2_NEPTUNE_ENCOUNTER,
+  eventWindow,
+  eventForTime,
+  type MissionEvent,
+  type TimeRange,
+} from "./voyagerEvents";
 
 interface TourStepContent extends BaseTourStepContent {
   event: MissionEvent;
@@ -1037,8 +1102,20 @@ const tour = useTour<TourStepContent>({
     event,
     setup: async () => {
       store.waitForReady().then(() => {
+        if (timePlaying.value) {
+          if (event.view) {
+            // playback has the time and camera; only the model size follows the event
+            modelLogScale.value = event.view.modelLogScale;
+          }
+          return;
+        }
         if (event.view) {
-          goToView(event.view);
+          if (event.fly && new Date(event.view.time) > SpaceTimeController.get_now()) {
+            // only fly forward in time
+            flyToView(event.view);
+          } else {
+            goToView(event.view);
+          }
           return;
         }
         store.setTime(event.date);
@@ -1051,10 +1128,141 @@ const tour = useTour<TourStepContent>({
 });
 urlState.track("tour", tour.stepID);
 
+// playback //
+// While playing, a frame callback sets the clock rate and the camera for wherever the clock is.
+const WINDOWS = VOYAGER_1_EVENTS.map((_, i) => eventWindow(VOYAGER_1_EVENTS, i)); // in date order
+const EASING_FRAMES = 30; // easing: a frame covers at most 1/EASING_FRAMES of the way to what's next
+const PALE_BLUE_DOT = VOYAGER_1_EVENTS.findIndex((e) => e.title === "Pale Blue Dot");
+const WIDE_VIEW = VOYAGER_1_EVENTS.find((e) => e.title === "Termination shock")!.view!;
+let currentStep: number | undefined | null = null; // the event the camera was set for: an index, undefined between windows, null to set it next frame
+let lastFrameMs: number | null = null; // wall time (performance.now) of the last frame while playing
+let secondsPerFrame = 1 / 60; // average frame length (wall time)
+
+/** sets the engine's rate now, so the next frame already runs at it. playbackRate mirrors it for the controls */
+function setClockRate(rate: number) {
+  if (rate !== playbackRate.value) {
+    store.setClockRate(rate);
+    playbackRate.value = rate;
+  }
+}
+
+/** averaged, so one slow frame doesn't jolt the rate */
+function updateSecondsPerFrame() {
+  const frameMs = performance.now();
+  if (lastFrameMs !== null) {
+    const thisFrame = (frameMs - lastFrameMs) / 1000;
+    secondsPerFrame = 0.9 * secondsPerFrame + 0.1 * thisFrame;
+  }
+  lastFrameMs = frameMs;
+}
+
+function eventRate(event: MissionEvent): number {
+  return event.rate ?? INTERSTITIAL_RATE;
+}
+
+/** the window `time` is in, or else the next one. undefined after the last */
+function getCurrentOrNextWindow(time: Date): TimeRange | undefined {
+  return WINDOWS.find((window) => time <= window.end);
+}
+
+/** the events whose time is in `window` (e.g. Jupiter closest approach and Io) */
+function getEventsInWindow(window: TimeRange): MissionEvent[] {
+  return VOYAGER_1_EVENTS.filter((e) => e.date >= window.start && e.date <= window.end);
+}
+
+/**
+ * Ease in and away from a target time. The rate is linear interpolation between
+ * them. Cap it between the slow and fast rates so it doesn't blow up far away.
+ * The easing scale is the number of frames we want to ease in/out over.
+ */
+function rateRamp(time: Date, target: Date, slowRate: number, fastRate: number): number {
+  const secondsAway = Math.abs(target.getTime() - time.getTime()) / 1000;
+  const rate = secondsAway / (EASING_FRAMES * secondsPerFrame);
+  return Math.min(fastRate, Math.max(slowRate, rate));
+}
+
+/**
+ * get the playback rate for a given time.
+ */
+function playbackRateAt(time: Date): number {
+  const window = getCurrentOrNextWindow(time);
+
+  if (!window) {
+    return INTERSTITIAL_RATE;
+  }
+
+  // what events are in this window.
+  const events = getEventsInWindow(window);
+
+  // get the highest valid rate
+  const fastestRateInWindow = Math.max(...events.map(eventRate));
+  // if before a window, ease in.
+  if (time < window.start) {
+    return rateRamp(time, window.start, fastestRateInWindow, INTERSTITIAL_RATE);
+  }
+  // each event can have it's own rate, we should be at the slowest one.
+  const eventRatesForTime = events.map((e) => rateRamp(time, e.date, eventRate(e), fastestRateInWindow));
+  return Math.min(...eventRatesForTime);
+}
+
+function isVoyager(track: TrackTarget): boolean {
+  return track === "voyager1" || track === "voyager2";
+}
+
+function voyagerAt(time: Date): TrackTarget {
+  return time > V1_SATURN_ENCOUNTER.end && time < V2_NEPTUNE_ENCOUNTER.end ? "voyager2" : "voyager1";
+}
+
+// for the pale blue dot - if we're following voyager, keep following voyager.
+// if on a step but and not following voyager, track that steps track
+// otherwise if we were in wide-views then stay in wide view, otherwise follow voyager.
+function setCameraForStep(step: number | undefined, time: Date) {
+  const followingVoyager = isVoyager(trackingCenter.value);
+  // stay wide after the Pale Blue Dot if we went to it via the tour (which sets the tracking center to the sun)
+  const stayWide = time > VOYAGER_1_EVENTS[PALE_BLUE_DOT].date && trackingCenter.value === WIDE_VIEW.track;
+
+  if (step === PALE_BLUE_DOT && followingVoyager) {
+    goToView({ ...WIDE_VIEW, time: time.toISOString() });
+  } else if (step !== undefined && !followingVoyager) {
+    const event = VOYAGER_1_EVENTS[step];
+    trackingCenter.value = event.view?.track ?? event.track ?? trackingCenter.value;
+  } else if (!stayWide) {
+    trackingCenter.value = voyagerAt(time);
+  }
+}
+
+function followEventsWhilePlaying() {
+  if (!timePlaying.value) {
+    currentStep = null;
+    lastFrameMs = null;
+    return;
+  }
+  updateSecondsPerFrame();
+  const now = SpaceTimeController.get_now();
+  setClockRate(playbackRateAt(now));
+
+  const step = eventForTime(VOYAGER_1_EVENTS, now);
+  if (step !== undefined && step !== tour.stepIndex.value) {
+    tour.goToStep(step, true);
+  }
+  if (step !== currentStep) {
+    // only on a change, so a track picked by hand lasts until the next one
+    currentStep = step;
+    setCameraForStep(step, now);
+  }
+}
+store.waitForReady().then(() => store.addFrameCallback(followEventsWhilePlaying));
+watch(timePlaying, (playing) => {
+  if (playing) {
+    followEventsWhilePlaying(); // before the clock moves, or its first frame runs at the old rate
+  }
+});
+
 // On the last step the Next button becomes Close. TourSheet's Next calls
 // tour.next(), which in the toolkit is an unbounded stepIndex += 1, so the sheet
 // gets a copy of the tour whose next() closes it there instead of stepping past
 // the end. Same refs, so the step stays in sync with `tour`.
+// Changing the step by hand pauses playback, so the step's view (time and camera) applies and stays.
 const onLastStep = computed(() => tour.stepIndex.value === tour.length - 1);
 const tourSheetTour = {
   ...tour,
@@ -1063,8 +1271,17 @@ const tourSheetTour = {
       tourFinished = true;
       showTour.value = false;
     } else {
+      timePlaying.value = false;
       await tour.next();
     }
+  },
+  previous: async () => {
+    timePlaying.value = false;
+    await tour.previous();
+  },
+  goToStep: async (step: number, force?: boolean) => {
+    timePlaying.value = false;
+    await tour.goToStep(step, force);
   },
 };
 
@@ -1097,7 +1314,6 @@ watch(showTour, (newVal) => {
     startTour();
   }
 });
-
 
 // using the navigation drawer layout for multiple things, means
 // it's a bit easier to have a computed combine the logic
@@ -1137,15 +1353,12 @@ watch(drawerOpenerClass, (now, before) => {
   }
 });
 
-
 function closeSplashScreen() {
   showSplashScreen.value = false;
   // has the user responsed the opt out, then show the privacy dialog
   // pass `true` to only show it once per session, even if the user does not respond (for example if it shows up after an intro sequence)
   conditionalShowPrivacyDialog();
 }
-
-
 </script>
 
 <style lang="less">
@@ -1156,7 +1369,6 @@ function closeSplashScreen() {
   --default-line-height: clamp(1rem, 2.2vmin, 1.6rem);
   --wwt-surface-background: rgba(0, 0, 0, 0.8);
 }
-
 
 html {
   height: 100%;
@@ -1180,13 +1392,13 @@ body {
   font-family: Verdana, Arial, Helvetica, sans-serif;
 
   &.kiosk {
-    a { // should not be able click on a kiosk
+    a {
+      // should not be able click on a kiosk
       pointer-events: none !important;
       text-decoration: none !important;
     }
   }
 }
-
 
 #app {
   margin: 0;
@@ -1204,7 +1416,6 @@ body {
   overflow: hidden;
 }
 
-
 // WWT fills #main-content, which gets its size from the flex layout above.
 // This breaks if #main-content stops having a definite size from layout.
 .wwtelescope-component {
@@ -1218,7 +1429,6 @@ body {
     display: block;
   }
 }
-
 
 // #wwt-overlay is positioned against #main-content, not the viewport
 #wwt-overlay {
@@ -1318,7 +1528,6 @@ body {
   align-items: center;
   gap: 1rem;
   flex-grow: 0;
-
 }
 
 // the panels that open from the right-hand buttons
@@ -1478,7 +1687,7 @@ body {
   #mission-slider {
     display: none;
   }
-  
+
   .wwt-clock-controls {
     flex-wrap: wrap;
     justify-content: center;
@@ -1491,7 +1700,6 @@ body {
   #event-slider {
     flex: 0 0 auto;
   }
-
 }
 
 // neither #logo-credits nor #icons-container are flex
@@ -1555,7 +1763,6 @@ body {
   background-color: rgba(var(--v-theme-primary), 0.6) !important;
   color: rgba(var(--v-theme-primary), 1) !important;
 }
-
 
 // It needs to be a flex column so that the children can fill the height
 #drawer .v-navigation-drawer__content {
@@ -1648,8 +1855,8 @@ body {
 
 .voyager-label {
   font-family: monospace;
- }
- 
+}
+
 .drawer-bottom .tour-sheet {
   padding: 4px;
 }

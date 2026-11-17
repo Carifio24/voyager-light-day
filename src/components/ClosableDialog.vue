@@ -7,14 +7,21 @@
     :scrim="scrim"
     :activator="activator"
   >
-    <template v-if="ownButton || $slots.activator" #activator="activatorScope">
-      <slot name="activator" v-bind="activatorScope">
-        <v-btn v-bind="activatorScope.props">
-          Open Dialog
-        </v-btn>
+    <template
+      v-if="ownButton || $slots.activator"
+      #activator="activatorScope"
+    >
+      <slot
+        name="activator"
+        v-bind="activatorScope"
+      >
+        <v-btn v-bind="activatorScope.props"> Open Dialog </v-btn>
       </slot>
     </template>
-    <v-card v-bind="cardProps" density="compact">
+    <v-card
+      v-bind="cardProps"
+      density="compact"
+    >
       <v-card-title v-if="title">
         <span class="closable-dialog-title"> {{ title }}</span>
       </v-card-title>
@@ -30,15 +37,14 @@
       />
     </v-card>
   </v-dialog>
-    
 </template>
 
 <script setup lang="ts">
-import { computed, type PropType } from 'vue';
-import { VCard, type VDialog } from 'vuetify/components';
-import { makeVCardProps } from 'vuetify/lib/components/VCard/VCard.js';
+import { computed, type PropType } from "vue";
+import { VCard, type VDialog } from "vuetify/components";
+import { makeVCardProps } from "vuetify/lib/components/VCard/VCard.js";
 import { CloseButton } from "@cosmicds/vue-toolkit";
-const open = defineModel('modelValue', { type: Boolean, default: false });
+const open = defineModel("modelValue", { type: Boolean, default: false });
 
 const props = defineProps({
   ...makeVCardProps(),
@@ -60,13 +66,12 @@ const props = defineProps({
     default: false,
   },
   activator: {
-    type: [String, Object] as PropType<VDialog['$props']['activator']>,
+    type: [String, Object] as PropType<VDialog["$props"]["activator"]>,
     default: undefined,
   },
 });
 
 const cardProps = computed(() => ({ ...VCard.filterProps(props), title: undefined })); // title is drawn in our own v-card-title
-
 </script>
 
 <style scoped>
@@ -75,5 +80,4 @@ const cardProps = computed(() => ({ ...VCard.filterProps(props), title: undefine
   top: 0.55rem;
   right: 0.75rem;
 }
-
 </style>

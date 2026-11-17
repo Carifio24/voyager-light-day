@@ -20,9 +20,8 @@ const isLoading = defineModel<boolean>({ default: true });
 
 defineSlots<{
   // not sure the return type is important. docs use any, but others use void
-  default(props: { loading: boolean}): void;
+  default(props: { loading: boolean }): void;
 }>();
-
 </script>
 
 <style scoped>

@@ -94,10 +94,10 @@ export default createVuetify({
           // golds sampled from the Voyager Golden Record artwork
           primary: "#DEBA68",
           secondary: "#583671",
-          "border": "#FDF5C2",
-          "contrast": "#C4CBFD",
+          border: "#FDF5C2",
+          contrast: "#C4CBFD",
           ...COSMICDS_COLORS,
-        },    
+        },
       },
     },
   },

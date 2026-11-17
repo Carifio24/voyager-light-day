@@ -11,7 +11,7 @@ export function useScaledZoom() {
   const zoomMax = ref(2400);
   WWTControl.singleton.setSolarSystemMinZoom(zoomMin.value);
   WWTControl.singleton.setSolarSystemMaxZoom(zoomMax.value);
-  
+
   const logZoomMin = computed(() => Math.log(zoomMin.value));
   const logZoomMax = computed(() => Math.log(zoomMax.value));
   const ZOOM_POWER = 3.5; // Power < 1 stretches the small-fov (zoomed-in) end of the slider.
@@ -68,13 +68,13 @@ export function useScaledZoom() {
   //     setZoom(floor);
   //   }
   // }
-  
+
   function setZoomMax(max: number) {
     zoomMax.value = max;
     WWTControl.singleton.setSolarSystemMaxZoom(zoomMax.value);
     setZoom(currentZoom());
   }
-  
+
   function setZoomMin(min: number | null) {
     zoomMin.value = min ?? DEFAULT_MIN_ZOOM;
     WWTControl.singleton.setSolarSystemMinZoom(zoomMin.value);

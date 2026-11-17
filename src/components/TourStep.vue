@@ -26,7 +26,7 @@
           @click="emit('go-to-view')"
         />
       </p>
-      <figure>
+      <figure v-if="image">
         <img
           :src="image"
           :alt="title"

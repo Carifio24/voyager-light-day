@@ -7,7 +7,6 @@
     if they do not want to edit the universal.css file directly.
 */
 
-
 /**
 Overrides needed for the v-navigation-drawer to respect the user's desired height
 **/
@@ -24,7 +23,7 @@ Overrides needed for the v-navigation-drawer to respect the user's desired heigh
 .v-navigation-drawer--active.drawer-bottom {
   height: var(--drawer-bottom-height) !important;
 }
-.v-main:has(+.v-navigation-drawer--active.drawer-bottom) {
+.v-main:has(+ .v-navigation-drawer--active.drawer-bottom) {
   --v-layout-bottom: var(--drawer-bottom-height) !important;
-  padding-bottom:var(--drawer-bottom-height);
+  padding-bottom: var(--drawer-bottom-height);
 }

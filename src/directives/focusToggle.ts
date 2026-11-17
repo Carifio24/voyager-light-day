@@ -9,26 +9,25 @@
  *
  */
 
-import { nextTick, type Directive } from 'vue';
-
+import { nextTick, type Directive } from "vue";
 
 export type FocusToggleDirective = Directive<HTMLElement, boolean>;
 
-declare module 'vue' {
-    export interface GlobalDirectives {
-        /**
-         * :v-focus-toggle=\<boolean\>
-         *
-         * Focuses the element when the bound value becomes true. When it
-         * becomes false, returns focus to whatever was focused beforehand -
-         * works regardless of what that was, so any kind of opener is fine.
-         *
-         * make sure element is focusable. if wrapper is a not a focusable
-         * element ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus))
-         * add `tabindex="-1"` after the v-focus*
-        */
-        vFocusToggle: FocusToggleDirective
-    }
+declare module "vue" {
+  export interface GlobalDirectives {
+    /**
+     * :v-focus-toggle=\<boolean\>
+     *
+     * Focuses the element when the bound value becomes true. When it
+     * becomes false, returns focus to whatever was focused beforehand -
+     * works regardless of what that was, so any kind of opener is fine.
+     *
+     * make sure element is focusable. if wrapper is a not a focusable
+     * element ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus))
+     * add `tabindex="-1"` after the v-focus*
+     */
+    vFocusToggle: FocusToggleDirective;
+  }
 }
 
 /** the WeakMap persists, but key elements can be garbage-collected so they don't build up when no longer relevant */
@@ -61,7 +60,7 @@ function deactivate(el: HTMLElement) {
  * make sure element is focusable. if wrapper is a not a focusable element
  * ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus))
  * add `tabindex="-1"` after the v-focus*
-*/
+ */
 export default {
   // the element may be v-if'd in already active (e.g. default true)
   mounted: (el, binding) => {

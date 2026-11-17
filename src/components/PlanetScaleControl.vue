@@ -1,5 +1,8 @@
 <template>
-  <slot :planet-scale="planetScale" :log-planet-scale="logPlanetScale">
+  <slot
+    :planet-scale="planetScale"
+    :log-planet-scale="logPlanetScale"
+  >
     <v-slider
       v-model="planetScale"
       min="1"
@@ -13,8 +16,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import { Settings} from '@wwtelescope/engine';
+import { ref, computed, watch } from "vue";
+import { Settings } from "@wwtelescope/engine";
 
 const settings = Settings.get_active();
 
@@ -38,7 +41,7 @@ const logPlanetScale = computed({
   get: () => Math.log10(planetScale.value),
   set: (logScale: number) => {
     planetScale.value = Math.pow(10, logScale);
-  } 
+  },
 });
 
 watch([planetScale, logPlanetScale], ([newPlanetScale, newLogPlanetScale]) => {
@@ -47,9 +50,6 @@ watch([planetScale, logPlanetScale], ([newPlanetScale, newLogPlanetScale]) => {
     logPlanetScale: newLogPlanetScale,
   });
 });
-
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

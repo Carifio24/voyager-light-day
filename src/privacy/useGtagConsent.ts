@@ -5,7 +5,6 @@ import { ref, watch, type Ref } from "vue";
 // @ts-ignore
 const GTAG_MEASUREMENT_ID = window.gtagMeasurementId as string;
 
-
 const CONSENT_STORAGE_KEY = "consentGranted";
 
 // window.gtag already exists - index.html's inline classic script declares it at top level, which attaches it to window
@@ -50,7 +49,6 @@ function updateConsent(granted: boolean) {
 
 // `initialConsent` is the default policy (true = opt-out/US-style); a stored localStorage choice always wins over it
 export function useGtagConsent(initialConsent: boolean): Ref<boolean> {
-  
   const storedConset = window.localStorage.getItem(CONSENT_STORAGE_KEY);
   const hadStoredChoice = storedConset !== null;
   const consent = ref(hadStoredChoice ? storedConset === "true" : initialConsent);
@@ -61,17 +59,21 @@ export function useGtagConsent(initialConsent: boolean): Ref<boolean> {
   }
 
   // only push an `update` once we know a real choice: a restored past one, or a live change below
-  watch(consent, (granted) => {
-    if (isLocalhost()) {
-      return;
-    }
-    window.localStorage.setItem(CONSENT_STORAGE_KEY, String(granted));
-    updateConsent(granted);
-    if (granted) {
-      loadGtagScript();
-    }
-    // turning it off just tells gtag.js to stop - there's no way to unload the script itself
-  }, { immediate: hadStoredChoice });
+  watch(
+    consent,
+    (granted) => {
+      if (isLocalhost()) {
+        return;
+      }
+      window.localStorage.setItem(CONSENT_STORAGE_KEY, String(granted));
+      updateConsent(granted);
+      if (granted) {
+        loadGtagScript();
+      }
+      // turning it off just tells gtag.js to stop - there's no way to unload the script itself
+    },
+    { immediate: hadStoredChoice },
+  );
 
   return consent;
 }

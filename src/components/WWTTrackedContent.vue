@@ -3,8 +3,7 @@
     ref="parent"
     class="wwt-tracked-content"
   >
-    <slot>
-    </slot>
+    <slot> </slot>
   </div>
 </template>
 
@@ -12,7 +11,7 @@
 import { useTemplateRef, watch } from "vue";
 import { Vector3d } from "@wwtelescope/engine";
 import { SolarSystemObjects } from "@wwtelescope/engine-types";
-import { engineStore } from '@wwtelescope/engine-pinia';
+import { engineStore } from "@wwtelescope/engine-pinia";
 
 import { bodyCenterInScene } from "../horizons/orbitLine";
 
@@ -42,35 +41,35 @@ const parent = useTemplateRef("parent");
 function updateVisibility(visible: boolean) {
   const element = parent.value;
   if (element) {
-    element.style.visibility = visible ? "visible": "hidden";
+    element.style.visibility = visible ? "visible" : "hidden";
   }
 }
 
 watch(() => props.visible, updateVisibility);
 
-watch(() => [props.position, props.offsetX, props.offsetY, props.frame] as [Vector3d, number, number,
-SolarSystemObjects], ([newPosition, newOffsetX, newOffsetY, newFrame]: [Vector3d, number,
-number, SolarSystemObjects]) => {
+watch(
+  () => [props.position, props.offsetX, props.offsetY, props.frame] as [Vector3d, number, number, SolarSystemObjects],
+  ([newPosition, newOffsetX, newOffsetY, newFrame]: [Vector3d, number, number, SolarSystemObjects]) => {
+    updateVisibility(newPosition != null);
+    if (!newPosition) {
+      return;
+    }
 
-  updateVisibility(newPosition != null);
-  if (!newPosition) {
-    return;
-  }
+    const element = parent.value;
+    if (!element) {
+      return;
+    }
 
-  const element = parent.value;
-  if (!element) {
-    return;
-  }
+    const center = bodyCenterInScene(newFrame);
+    const position = Vector3d.create(newPosition.x + center.x, newPosition.y + center.z, newPosition.z + center.y);
+    const screenPoint = props.store.findScreenPointForCoordinates(position);
+    screenPoint.x += newOffsetX;
+    screenPoint.y += newOffsetY;
 
-  const center = bodyCenterInScene(newFrame);
-  const position = Vector3d.create(newPosition.x + center.x, newPosition.y + center.z, newPosition.z + center.y);
-  const screenPoint = props.store.findScreenPointForCoordinates(position);
-  screenPoint.x += newOffsetX;
-  screenPoint.y += newOffsetY;
-
-  element.style.left = `${screenPoint.x}px`;
-  element.style.top= `${screenPoint.y}px`;
-});
+    element.style.left = `${screenPoint.x}px`;
+    element.style.top = `${screenPoint.y}px`;
+  },
+);
 </script>
 
 <style lang="less">

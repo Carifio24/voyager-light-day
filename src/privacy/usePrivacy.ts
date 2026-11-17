@@ -1,4 +1,4 @@
-import { ref,  watch} from "vue";
+import { ref, watch } from "vue";
 
 import { useDataTracking, type DataTrackingOptions, type TrackingData } from "@cosmicds/vue-toolkit";
 import type { Prettify } from "@/types";
@@ -17,7 +17,6 @@ export interface UsePrivacyOptions extends DataTrackingOptions {
  * refs, and implements the timeout watcher
  */
 export function usePrivacy(options: Prettify<UsePrivacyOptions>) {
-
   const showDataCollectionOptOut = ref(false);
   const showPrivacyPolicyInfo = ref(false);
 
@@ -30,14 +29,14 @@ export function usePrivacy(options: Prettify<UsePrivacyOptions>) {
     getData: options.getData,
     updateIntervalMs: options.updateIntervalMs, // optional
   });
-  
+
   // Persistent means the notice cannot be clicked away, so give it its own way
   // out: if it is ignored it stands down rather than blocking the corner forever.
-  
+
   let privacyNoticeTimeout: ReturnType<typeof setTimeout> | null = null;
-  
-  // when showPrivacyDialog changes, if it is true, 
-  // start a timeout to hide it after the specified time. 
+
+  // when showPrivacyDialog changes, if it is true,
+  // start a timeout to hide it after the specified time.
   // TODO: if the user clicks to show the Privacy Policy Info, then we should make sure the privacy dialog is not hiddent while it is open and ideally not at all...
   watch(showDataCollectionOptOut, (open) => {
     if (privacyNoticeTimeout !== null) {
@@ -50,11 +49,11 @@ export function usePrivacy(options: Prettify<UsePrivacyOptions>) {
       }, options.privacyNoticeTimeoutMs ?? PRIVACY_NOTICE_TIMEOUT_MS);
     }
   });
-  
+
   // replaying any intro content brings this back up only once per session; the
   // privacy-lock icon still opens it on demand after that
   let privacyNoticeShown = false;
-  
+
   /**
    * Only show the privacy dialog if the user has not yet responded to the opt out
    * and the privacy notice has not yet been shown in this session (if oncePerSession = true). */
@@ -66,7 +65,7 @@ export function usePrivacy(options: Prettify<UsePrivacyOptions>) {
       showDataCollectionOptOut.value = true;
     }
   }
-  
+
   return {
     createUserEntry,
     responseOptOut,

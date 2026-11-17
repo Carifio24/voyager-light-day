@@ -12,8 +12,11 @@ import paleBlueDot from "@/assets/voyager/pale-blue-dot.jpg";
 import terminationShock from "@/assets/voyager/termination-shock.jpg";
 import interstellar from "@/assets/voyager/interstellar.jpg";
 import lightDay from "@/assets/voyager/light-day.jpg";
+import trajectory from "@/assets/voyager/voyager_trajectories_jpl_caltech.png";
 
 import { ViewSpec } from "./types";
+
+export const INTERSTITIAL_RATE = 20000000;
 
 export interface MissionEvent {
   title: string;
@@ -27,24 +30,40 @@ export interface MissionEvent {
   /** when the image was taken, from its NASA caption (not always the event time) */
   imageTaken: string;
   /** what the camera tracks when jumping to this event */
-  track?: SolarSystemObjects;
+  track?: ViewSpec["track"];
   /** half-width (days) of the tour step slider's window around `date`. Default 2 */
   windowDays?: number;
   window?: TimeRange;
   view?: ViewSpec;
+  /** fly to `view` (camera and clock) instead of jumping */
+  fly?: boolean;
+  // Rate (seconds per seconds)
+  rate?: number;
 }
 
-interface TimeRange {
+export interface TimeRange {
   start: Date;
   end: Date;
 }
 
 const V1_LAUNCH: TimeRange = { start: new Date("1977-09-01T00:00:00Z"), end: new Date("1977-11-01T00:00:00Z") };
 
-const V1_JUPITER_ENCOUNTER: TimeRange = { start: new Date("1979-03-03T00:00:00Z"), end: new Date("1979-03-09T00:00:00Z") };
-const V1_SATURN_ENCOUNTER: TimeRange = { start: new Date("1980-11-11T00:00:00Z"), end: new Date("1980-11-14T00:00:00Z") };
-const V2_URANUS_ENCOUNTER: TimeRange = { start: new Date("1986-01-24T10:00:00Z"), end: new Date("1986-01-25T00:00:00Z") };
-const V2_NEPTUNE_ENCOUNTER: TimeRange = { start: new Date("1989-08-24T19:00:00Z"), end: new Date("1989-08-25T07:00:00Z") };
+const V1_JUPITER_ENCOUNTER: TimeRange = {
+  start: new Date("1979-03-03T00:00:00Z"),
+  end: new Date("1979-03-06T20:00:00Z"),
+};
+export const V1_SATURN_ENCOUNTER: TimeRange = {
+  start: new Date("1980-11-11T00:00:00Z"),
+  end: new Date("1980-11-14T00:00:00Z"),
+};
+const V2_URANUS_ENCOUNTER: TimeRange = {
+  start: new Date("1986-01-24T10:00:00Z"),
+  end: new Date("1986-01-25T00:00:00Z"),
+};
+export const V2_NEPTUNE_ENCOUNTER: TimeRange = {
+  start: new Date("1989-08-24T19:00:00Z"),
+  end: new Date("1989-08-25T07:00:00Z"),
+};
 
 export const ONE_LIGHT_DAY = new Date("2026-11-18T10:16:00Z");
 
@@ -66,6 +85,35 @@ export function eventWindow(events: MissionEvent[], i: number): TimeRange {
   };
 }
 
+export function eventForTime(events: MissionEvent[], time: Date): number | undefined {
+  const t = time.getTime();
+  const inWindow: MissionEvent[] = [];
+  for (let i = 0; i < events.length; i++) {
+    const window = eventWindow(events, i);
+    if (t >= window.start.getTime() && t <= window.end.getTime()) {
+      inWindow.push(events[i]);
+    }
+  }
+  if (inWindow.length === 1) {
+    return events.indexOf(inWindow[0]);
+  }
+  if (inWindow.length > 1) {
+    // pick the closest to the time
+    let closestIndex = events.indexOf(inWindow[0]);
+    let closestDiff = Math.abs(events[closestIndex].date.getTime() - t);
+    for (let i = 1; i < inWindow.length; i++) {
+      const index = events.indexOf(inWindow[i]);
+      const diff = Math.abs(events[index].date.getTime() - t);
+      if (diff < closestDiff) {
+        closestIndex = index;
+        closestDiff = diff;
+      }
+    }
+    return closestIndex;
+  }
+  return undefined;
+}
+
 export const VOYAGER_1_EVENTS: MissionEvent[] = [
   {
     title: "Launch",
@@ -79,7 +127,16 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     imageTaken: "1977-09-05",
     track: SolarSystemObjects.earth,
     window: V1_LAUNCH,
-    view: {"time":"1977-09-05T12:56:00.000Z","track":19,"lat":27.017421875000036,"lng":204.56484845779983,"zoom":2.847799106383314,"rotation":0,"angle":0,"modelLogScale":7},
+    view: {
+      time: "1977-09-05T12:56:00.000Z",
+      track: 19,
+      lat: 27.017421875000036,
+      lng: 204.56484845779983,
+      zoom: 2.847799106383314,
+      rotation: 0,
+      angle: 0,
+      modelLogScale: 5.64,
+    },
   },
   {
     title: "Earth and Moon",
@@ -98,7 +155,16 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     imageTaken: "1977-09-18",
     track: SolarSystemObjects.earth,
     window: V1_LAUNCH,
-    view: {"time":"1977-09-18T22:20:00.000Z","track":19,"lat":7.40995312499998,"lng":334.6931336265325,"zoom":0.2100245670950015,"rotation":0,"angle":0,"modelLogScale":7},
+    view: {
+      time: "1977-09-18T22:20:00.000Z",
+      track: 19,
+      lat: 7.40995312499998,
+      lng: 334.6931336265325,
+      zoom: 0.2100245670950015,
+      rotation: 0,
+      angle: 0,
+      modelLogScale: 5.64,
+    },
   },
   {
     title: "Jupiter closest approach",
@@ -111,12 +177,23 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     date: new Date("1979-03-05T12:05:00Z"),
     image: jupiter,
     imageUrl: "https://science.nasa.gov/photojournal/jupiter-with-satellites-io-and-europa/",
-    opusUrl: "https://opus.pds-rings.seti.org/#/instrument=Voyager+ISS&observationtype=Image&time1=1979-02-13T06:00:00.000&time2=1979-02-13T06:04:00.000&qtype-time=any&unit-time=ymdhms&VOYAGERmissionphasename=Jupiter+Encounter&cols=opusid,instrument,planet,target,time1,observationduration&widgets=time,VOYAGERmissionphasename,instrument,observationtype,target&order=time1,opusid&view=browse&browse=data&cart_browse=gallery&startobs=1&cart_startobs=1&detail=",
+    opusUrl:
+      "https://opus.pds-rings.seti.org/#/instrument=Voyager+ISS&observationtype=Image&time1=1979-02-13T06:00:00.000&time2=1979-02-13T06:04:00.000&qtype-time=any&unit-time=ymdhms&VOYAGERmissionphasename=Jupiter+Encounter&cols=opusid,instrument,planet,target,time1,observationduration&widgets=time,VOYAGERmissionphasename,instrument,observationtype,target&order=time1,opusid&view=browse&browse=data&cart_browse=gallery&startobs=1&cart_startobs=1&detail=",
     credit: "NASA/JPL",
     imageTaken: "1979-02-13",
     track: SolarSystemObjects.jupiter,
     window: V1_JUPITER_ENCOUNTER,
-    view: {"time":"1979-03-05T12:05:00.000Z","track":"voyager1","lat":11.249210937499992,"lng":310.83608867904195,"zoom":0.006336824207632345,"rotation":0,"angle":0,"modelLogScale":7},
+    view: {
+      time: "1979-03-05T12:05:00.000Z",
+      track: "voyager1",
+      lat: 11.249210937499992,
+      lng: 310.83608867904195,
+      zoom: 0.006336824207632345,
+      rotation: 0,
+      angle: 0,
+      modelLogScale: 5.64,
+    },
+    rate: 20_000,
   },
   {
     title: "Io's volcanoes",
@@ -130,12 +207,24 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     date: new Date("1979-03-05T15:14:00Z"),
     image: io,
     imageUrl: "https://science.nasa.gov/photojournal/volcanic-explosion-on-io/",
-    opusUrl: "https://opus.pds-rings.seti.org/opus/#/instrument=Voyager+ISS&observationtype=Image&target=Io&VOYAGERmissionphasename=Jupiter+Encounter&cols=opusid,instrument,planet,target,time1,observationduration&widgets=VOYAGERmissionphasename,instrument,observationtype,target&order=time1,opusid&view=detail&browse=data&cart_browse=gallery&startobs=276&cart_startobs=1&detail=vg-iss-1-j-c1637534",
+    opusUrl:
+      "https://opus.pds-rings.seti.org/opus/#/instrument=Voyager+ISS&observationtype=Image&target=Io&VOYAGERmissionphasename=Jupiter+Encounter&cols=opusid,instrument,planet,target,time1,observationduration&widgets=VOYAGERmissionphasename,instrument,observationtype,target&order=time1,opusid&view=detail&browse=data&cart_browse=gallery&startobs=276&cart_startobs=1&detail=vg-iss-1-j-c1637534",
     credit: "NASA/JPL",
     imageTaken: "1979-03-05 01:30 UT",
     track: SolarSystemObjects.io,
     window: V1_JUPITER_ENCOUNTER,
-    view: {"time":"1979-03-05T15:14:00.000Z","track":10,"lat":-17.0179453125001,"lng":267.48696811294144,"zoom":0.0008728047173074942,"rotation":0,"angle":0,"modelLogScale":5.64},
+    fly: true,
+    view: {
+      time: "1979-03-05T15:14:00.000Z",
+      track: 10,
+      lat: -17.0179453125001,
+      lng: 267.48696811294144,
+      zoom: 0.0008728047173074942,
+      rotation: 0,
+      angle: 0,
+      modelLogScale: 5.64,
+    },
+    rate: 5000,
   },
   {
     title: "Titan flyby",
@@ -151,7 +240,17 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     imageTaken: "1980-11-12",
     track: SolarSystemObjects.saturn,
     window: V1_SATURN_ENCOUNTER,
-    view: {"time":"1980-11-12T05:41:00.000Z","track":"voyager1","lat":-3.6122343893580813,"lng":297.41595835515136,"zoom":0.0021064959911496115,"rotation":0,"angle":0,"modelLogScale":5.64},
+    view: {
+      time: "1980-11-12T05:41:00.000Z",
+      track: "voyager1",
+      lat: -3.6122343893580813,
+      lng: 297.41595835515136,
+      zoom: 0.0021064959911496115,
+      rotation: 0,
+      angle: 0,
+      modelLogScale: 5.64,
+    },
+    rate: 5000,
   },
   {
     title: "Saturn closest approach",
@@ -168,7 +267,43 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     imageTaken: "1981-08-17",
     track: SolarSystemObjects.saturn,
     window: V1_SATURN_ENCOUNTER,
-    view: {"time":"1980-11-12T23:46:00.000Z","track":5,"lat":-13.926023437500092,"lng":352.7561755928077,"zoom":0.01438429502868702,"rotation":0,"angle":0,"modelLogScale":5.64},
+    fly: true,
+    view: {
+      time: "1980-11-12T23:46:00.000Z",
+      track: 5,
+      lat: -13.926023437500092,
+      lng: 352.7561755928077,
+      zoom: 0.01438429502868702,
+      rotation: 0,
+      angle: 0,
+      modelLogScale: 5.64,
+    },
+    rate: 10_000,
+  },
+  {
+    title: "Voyager 2 Continues the Grand Tour",
+    caption: `Because Voyager 1 was instructed to fly by Saturn's moon Titan, it 
+      could not continue on to Uranus and Neptune. Voyager 2, which launched
+      about 2 weeks before Voyager 1 was able to continue on to Uranus and Neptune. 
+      It is still the only spacecraft to have visited these two outer planets`,
+    date: V1_SATURN_ENCOUNTER.end,
+    image: trajectory,
+    imageUrl:
+      "https://www.jpl.nasa.gov/edu/resources/teachable-moment/then-there-were-two-voyager-2-reaches-interstellar-space/",
+    credit: "NASA/JPL-Caltech",
+    imageTaken: "",
+    track: "voyager2",
+    fly: false,
+    view: {
+      time: "1980-11-16T00:00:00.000Z",
+      track: "voyager2",
+      lat: 18.95997656249991,
+      lng: 74.0489350985174,
+      zoom: 38.812419116147076,
+      rotation: 0,
+      angle: 0,
+      modelLogScale: 5.64,
+    },
   },
   {
     title: "Uranus closest approach",
@@ -181,7 +316,17 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     credit: "NASA/JPL-Caltech",
     imageTaken: "1986-01-24",
     window: V2_URANUS_ENCOUNTER,
-    view: {"time":"1986-01-24T11:54:00.000Z","track":"voyager2","lat":13.061632812500047,"lng":34.60889988727456,"zoom":0.0013287107234331878,"rotation":0,"angle":0,"modelLogScale":5.64}
+    view: {
+      time: "1986-01-24T15:47:00.000Z",
+      track: 6,
+      lat: 54.08644531250005,
+      lng: 344.98883480082486,
+      zoom: 0.024688103953992548,
+      rotation: 1e-323,
+      angle: -1e-323,
+      modelLogScale: 5.64,
+    },
+    rate: 8_000,
   },
   {
     title: "Neptune closest approach",
@@ -195,7 +340,17 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     credit: "NASA/JPL",
     imageTaken: "1989",
     window: V2_NEPTUNE_ENCOUNTER,
-    view: {"time":"1989-08-25T03:56:00.000Z","track":7,"lat":-30.024101562499958,"lng":289.5682572315336,"zoom":0.009060231218713199,"rotation":0,"angle":0,"modelLogScale":5.64},
+    view: {
+      time: "1989-08-25T03:56:00.000Z",
+      track: 7,
+      lat: -30.024101562499958,
+      lng: 289.5682572315336,
+      zoom: 0.009060231218713199,
+      rotation: 0,
+      angle: 0,
+      modelLogScale: 5.64,
+    },
+    rate: 8_000,
   },
   {
     title: "Pale Blue Dot",
@@ -209,7 +364,17 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     credit: "NASA/JPL-Caltech",
     imageTaken: "1990-02-14 (2020 reprocessing)",
     track: SolarSystemObjects.sun,
-    view: {"time":"1990-02-14T04:48:00.000Z","track":19,"lat":32.9932265624999,"lng":152.90936361136824,"zoom":96.01881970144674,"rotation":0,"angle":0,"modelLogScale":9.61},
+    view: {
+      time: "1990-02-14T04:48:00.000Z",
+      track: 19,
+      lat: 32.9932265624999,
+      lng: 152.90936361136824,
+      zoom: 96.01881970144674,
+      rotation: 0,
+      angle: 0,
+      modelLogScale: 9.61,
+    },
+    rate: 1000000,
   },
   {
     title: "Termination shock",
@@ -225,7 +390,18 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     credit: "NASA/JPL/Walt Feimer",
     imageTaken: "artist's concept, 2003",
     track: SolarSystemObjects.sun,
-    view: {"time":"2004-12-16T00:00:00.000Z","track":0,"lat":32.36864062499995,"lng":80.90261612548761,"zoom":620.3744396783222,"rotation":0,"angle":0,"modelLogScale":9.61},
+    fly: true,
+    view: {
+      time: "2004-12-16T00:00:00.000Z",
+      track: 0,
+      lat: 32.36864062499995,
+      lng: 80.90261612548761,
+      zoom: 620.3744396783222,
+      rotation: 0,
+      angle: 0,
+      modelLogScale: 9.61,
+    },
+    rate: 20000000,
   },
   {
     title: "Interstellar space",
@@ -240,7 +416,18 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     credit: "NASA/JPL-Caltech",
     imageTaken: "artist's concept, 2013",
     track: SolarSystemObjects.sun,
-    view: {"time":"2012-08-25T00:00:00.000Z","track":0,"lat":32.36864062499995,"lng":80.90261612548761,"zoom":724.5852368350302,"rotation":0,"angle":0,"modelLogScale":9.61},
+    fly: true,
+    view: {
+      time: "2012-08-25T00:00:00.000Z",
+      track: 0,
+      lat: 32.36864062499995,
+      lng: 80.90261612548761,
+      zoom: 724.5852368350302,
+      rotation: 0,
+      angle: 0,
+      modelLogScale: 9.61,
+    },
+    rate: 20000000,
   },
   {
     title: "One light-day from Earth",
@@ -253,7 +440,16 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     credit: "NASA/JPL-Caltech",
     imageTaken: "artist's concept, 2013",
     track: SolarSystemObjects.sun,
-    view: {"time":"2026-11-18T10:16:00.000Z","track":"voyager1","lat":3.1273276264099112,"lng":266.02358244622883,"zoom":1.3123507461412482,"rotation":0.6279999999999997,"angle":-0.0009999999999999994,"modelLogScale":9.61},
-
+    view: {
+      time: "2026-11-18T10:16:00.000Z",
+      track: "voyager1",
+      lat: 3.1273276264099112,
+      lng: 266.02358244622883,
+      zoom: 1.3123507461412482,
+      rotation: 0.6279999999999997,
+      angle: -0.0009999999999999994,
+      modelLogScale: 9.61,
+    },
+    rate: 1000000,
   },
 ];

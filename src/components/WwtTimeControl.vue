@@ -33,6 +33,7 @@
     <div class="wwt-clock-controls">
       <speed-control
         v-if="!hideRate"
+        ref="speedControlRef"
         v-model="playing"
         class="wwt-speed-control"
         :store="store"
@@ -40,7 +41,12 @@
         :max-speed="100000000"
         :show-status="!hideStatus"
         :color="color"
+        hide-more-controls
+        @speed-up="(r) => (rate = r)"
+        @slow-down="(r) => (rate = r)"
+        @set-rate="(r) => (rate = r)"
       />
+      {{ niceRate(rate, 0) }}
       <v-btn
         v-if="!hideNow"
         class="text-none wwt-now-button"
@@ -57,11 +63,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, onMounted, useTemplateRef, type WritableComputedRef } from "vue";
 import { engineStore } from "@wwtelescope/engine-pinia";
 import { SpeedControl } from "@cosmicds/vue-toolkit";
+import { niceRate } from "../readable_rates";
 
 const store = engineStore();
+
+defineEmits<{
+  (e: "play" | "pause"): void;
+  (e: "rate-change", rate: number): void;
+}>();
 
 // each control can be hidden
 defineProps<{
@@ -81,6 +93,7 @@ defineProps<{
 
 // whether time is running. v-model so the parent can pause it (e.g. when scrubbing)
 const playing = defineModel<boolean>({ default: false });
+const rate = defineModel<number>("rate", { required: true, default: 1 });
 
 function isoString(date: Date) {
   return date.toISOString().replace("Z", "").split(".")[0] as string;
@@ -97,6 +110,37 @@ watch(
     }
   },
 );
+
+const speedControlRef = useTemplateRef<InstanceType<typeof SpeedControl>>("speedControlRef");
+// SpeedControl has only 1 computed property. Claude found a way (specific to vue 3.5.44) to get a reference.
+function findPlaybackRate(): WritableComputedRef<number> | undefined {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let link = (speedControlRef.value?.$.effect as any)?.deps;
+  while (link) {
+    if (link.dep.computed?.setter) return link.dep.computed;
+    link = link.nextDep;
+  }
+}
+
+onMounted(() => {
+  const playbackRate = findPlaybackRate();
+  console.log(speedControlRef.value);
+  if (!playbackRate) {
+    console.warn("SpeedControl's playbackRate not found");
+    return;
+  }
+  playbackRate.value = rate.value; // initialize
+  watch(
+    rate,
+    (r) => {
+      if (r !== undefined && r !== playbackRate.value) playbackRate.value = r;
+    },
+    { immediate: true },
+  );
+  watch(playbackRate, (r) => {
+    rate.value = r;
+  });
+});
 
 const setTime = () => store.setTime(new Date(selectedDateTime.value + "Z"));
 </script>
