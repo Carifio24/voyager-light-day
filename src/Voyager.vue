@@ -134,10 +134,10 @@
                 v-if="voyagerLightTime"
                 id="light-time"
               >
-                <div class="light-time-label">Voyager 1's Distance from Earth:</div>
+                <div class="light-time-label">Voyager 1's Light Speed Distance from Earth:</div>
                 <div class="light-time-value mt-1">
                   <span class="light-time-number">{{ voyagerLightTime }}</span>
-                  <span class="light-time-label"> at light speed</span>
+                  <span class="light-time-label"></span>
                 </div>
                 <div class="light-time-label mt-2">
                   on <span class="light-time-date">{{ shownDate }}</span>
