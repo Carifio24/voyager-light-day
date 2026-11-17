@@ -1934,6 +1934,10 @@ body {
   display: none;
 }
 
+.tour-sheet .tour-text-controls .tour-dots button.tour-dot-active {
+  color: hsl(233deg 90% 72%);
+}
+
 /* Even touching, the dots don't fit between Back and Next in a narrow box (the
    left drawer on a landscape phone is ~230px), so there they get a row of
    their own above the buttons. The 300px is sized for ~13 steps: 13 dots at
