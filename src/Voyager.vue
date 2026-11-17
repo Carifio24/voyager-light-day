@@ -275,6 +275,7 @@
                 :color="accentColor"
                 hide-rate-changers
                 hide-home-button
+                :hide-now="showTour"
               />
               <!-- the whole mission, log in time since launch -->
               <MissionTimeSlider
