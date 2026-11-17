@@ -671,6 +671,7 @@ onMounted(() => {
     setUpVoyagerScene();
     positionSet.value = true;
     layersLoaded.value = true;
+    active.value = true;
 
     createUserEntry();
     initializePrompt();
@@ -1084,8 +1085,9 @@ const gtagConsent = useGtagConsent(true);
 const showTour = ref(false);
 
 /** app tracking setup */
-const STORY_NAME = "voyager" as const;
-const appTime = createTrackingTimer({ active: ref(true) });
+const STORY_NAME = "voyager-light-day" as const;
+const active = ref(false);
+const appTime = createTrackingTimer({ active });
 const missionSliderUses = createTrackingCounter();
 const playClickedCounter = createTrackingCounter();
 const userGuideTime = createTrackingTimer({
@@ -1125,6 +1127,7 @@ const {
   showPrivacyPolicyInfo,
   conditionalShowPrivacyDialog,
 } = usePrivacy({
+  apiKey: import.meta.env.VITE_CDS_API_KEY ?? "",
   optOutKey: `${STORY_NAME}:optOut`,
   userIDKey: `${STORY_NAME}:userID`,
   storyPath: `/${STORY_NAME}`,
