@@ -62,7 +62,7 @@
       </v-btn>
     </div>
     <div class="wwt-rate">
-      Rate: {{ niceRate(rate, 0) }}{{ playing ? "" : " (paused)" }} 
+      Rate: {{ roundedRate(rate) }}{{ playing ? "" : " (paused)" }} 
     </div>
   </fieldset>
 </template>
@@ -71,7 +71,17 @@
 import { ref, watch, onMounted, useTemplateRef, type WritableComputedRef } from "vue";
 import { engineStore } from "@wwtelescope/engine-pinia";
 import { SpeedControl } from "@cosmicds/vue-toolkit";
-import { niceRate } from "../readable_rates";
+// import { niceRate } from "../readable_rates";
+
+function roundedRate(rate: number) {
+  // just keep 1 significant digit, for display purposes
+  if (rate === 0) return 0;
+  const sign = Math.sign(rate);
+  const absRate = Math.abs(rate);
+  const exponent = Math.floor(Math.log10(absRate));
+  const rounded = Math.round(absRate / Math.pow(10, exponent)) * Math.pow(10, exponent);
+  return `~${(sign * rounded).toLocaleString('en-US')} × real time`;
+}
 
 const store = engineStore();
 
@@ -160,7 +170,7 @@ const setTime = () => store.setTime(new Date(selectedDateTime.value + "Z"));
 
 <style lang="less">
 fieldset#wwt-time-control {
-  --spacing: 1em;
+  --spacing: 0.5em;
   pointer-events: auto; // #wwt-overlay turns them off
   display: flex;
   flex-direction: column;
