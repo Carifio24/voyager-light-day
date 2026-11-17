@@ -1474,6 +1474,24 @@ body {
   // even padding
   padding: 8px !important;
   border-width: 2px !important;
+
+  // every icon button the size of the time controls' (35px; 28px on phones), whose sizes are
+  // set in WwtTimeControl.vue. !important beats the icons' inline sizes
+  > .v-icon {
+    font-size: 15px !important;
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  @media (width <= 600px) {
+    padding: 6px !important;
+
+    > .v-icon {
+      font-size: 12px !important;
+      width: 12px !important;
+      height: 12px !important;
+    }
+  }
 }
 
 /* The drawer buttons' pressed state: filled gold with a purple icon, instead of
