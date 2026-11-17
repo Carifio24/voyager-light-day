@@ -12,6 +12,7 @@ import paleBlueDot from "@/assets/voyager/pale-blue-dot.jpg";
 import terminationShock from "@/assets/voyager/termination-shock.jpg";
 import interstellar from "@/assets/voyager/interstellar.jpg";
 import lightDay from "@/assets/voyager/light-day.jpg";
+import trajectory from "@/assets/voyager/voyager_trajectories_jpl_caltech.png";
 
 import { ViewSpec } from "./types";
 
@@ -29,7 +30,7 @@ export interface MissionEvent {
   /** when the image was taken, from its NASA caption (not always the event time) */
   imageTaken: string;
   /** what the camera tracks when jumping to this event */
-  track?: SolarSystemObjects;
+  track?: ViewSpec["track"];
   /** half-width (days) of the tour step slider's window around `date`. Default 2 */
   windowDays?: number;
   window?: TimeRange;
@@ -278,6 +279,21 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
       modelLogScale: 5.64,
     },
     rate: 10_000,
+  },
+  {
+    title: "Voyager 2 Continues the Grand Tour",
+    caption: `Because Voyager 1 was instructed to fly by Saturn's moon Titan, it 
+      could not continue on to Uranus and Neptune. Voyager 2, which launched
+      about 2 weeks before Voyager 1 was able to continue on to Uranus and Neptune. 
+      It is still the only spacecraft to have visited these two outer planets`,
+    date: V1_SATURN_ENCOUNTER.end,
+    image: trajectory,
+    imageUrl: "https://www.jpl.nasa.gov/edu/resources/teachable-moment/then-there-were-two-voyager-2-reaches-interstellar-space/",
+    credit: "NASA/JPL-Caltech",
+    imageTaken: "",
+    track: "voyager2",
+    fly: false,
+    view: {"time":"1980-11-16T00:00:00.000Z","track":"voyager2","lat":18.95997656249991,"lng":74.0489350985174,"zoom":38.812419116147076,"rotation":0,"angle":0,"modelLogScale":5.64},
   },
   {
     title: "Uranus closest approach",

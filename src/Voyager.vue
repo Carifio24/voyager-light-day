@@ -1000,7 +1000,7 @@ const tour = useTour<TourStepContent>({
           return;
         }
         if (event.view) {
-          if (event.fly) {
+          if (event.fly && new Date(event.view.time) > SpaceTimeController.get_now()) { // only fly forward in time
             flyToView(event.view);
           } else {
             goToView(event.view);
