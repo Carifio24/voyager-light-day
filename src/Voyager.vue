@@ -111,7 +111,7 @@
                 @activate="() => toggleInfoSheetTab('user-guide')"
               />
               <!-- zoom, as in artemis-ii: top of the slider is zoomed in -->
-              <div v-if="!showTour" id="zoom-controls">
+              <div v-if="!xs" id="zoom-controls">
                 <button
                   class="zoom-button"
                   aria-label="Zoom in"
@@ -180,7 +180,7 @@
                 @activate="fullscreen = !fullscreen"
               />
               <icon-button
-                v-if="!showTour"
+                v-if="!xs"
                 v-model="showControls"
                 class="sheet-toggle"
                 :icon="showControls ? 'xmark' : 'sliders'"
@@ -288,7 +288,7 @@
               />
               <MissionTimeSlider
                 v-else
-                v-show="!TOUR_EVENTS[tour.stepIndex.value]?.noSlider"
+                v-show="!TOUR_EVENTS[tour.stepIndex.value]?.noSlider && (!xs)"
                 id="event-slider"
                 :class="{ 'outside-step': outsideStepWindow }"
                 :inert="outsideStepWindow"
@@ -342,7 +342,7 @@
 
           <!-- credit logos $logo-credits.cds-bottom-credits -->
           <credit-logos
-            v-if="!xs"
+            v-if="!xs && !(showTour && !sidePanel)"
             class="cds-bottom-credits"
             :default-logos="['cosmicds', 'wwt', 'nasa']"
             :logo-size="xs ? '1.5em' : '2em'"
