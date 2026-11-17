@@ -1101,6 +1101,7 @@ import { TourSheet, useTour, type BaseTourStepContent } from "@cosmicds/vue-tool
 
 import {
   VOYAGER_1_EVENTS,
+  LIGHT_DAY_INTRO,
   ONE_LIGHT_DAY,
   INTERSTITIAL_RATE,
   V1_SATURN_ENCOUNTER,
@@ -1114,13 +1115,18 @@ import {
 interface TourStepContent extends BaseTourStepContent {
   event: MissionEvent;
 }
+// The tour opens on Voyager 1 at one light-day, then goes through the mission in date order.
+// Playback works from VOYAGER_1_EVENTS (it relies on date order), so mission event i is tour step i + INTRO_STEPS
+const TOUR_EVENTS = [LIGHT_DAY_INTRO, ...VOYAGER_1_EVENTS];
+const INTRO_STEPS = TOUR_EVENTS.length - VOYAGER_1_EVENTS.length;
+
 const tour = useTour<TourStepContent>({
   /**
    be careful if you have multiple moves when your app starts up
    so that they don't conflict with each other.
    */
-  // one step per mission event: the clock goes to it and the camera tracks its body
-  steps: VOYAGER_1_EVENTS.map((event) => ({
+  // one step per event: the clock goes to it and the camera tracks its body
+  steps: TOUR_EVENTS.map((event) => ({
     id: event.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
     title: event.title,
     text: [event.caption],
@@ -1266,9 +1272,9 @@ function followEventsWhilePlaying() {
   const now = SpaceTimeController.get_now();
   setClockRate(playbackRateAt(now));
 
-  const step = eventForTime(VOYAGER_1_EVENTS, now);
-  if (step !== undefined && step !== tour.stepIndex.value) {
-    tour.goToStep(step, true);
+  const step = eventForTime(VOYAGER_1_EVENTS, now); // a mission event, not a tour step
+  if (step !== undefined && step + INTRO_STEPS !== tour.stepIndex.value) {
+    tour.goToStep(step + INTRO_STEPS, true);
   }
   if (step !== currentStep) {
     // only on a change, so a track picked by hand lasts until the next one
@@ -1279,6 +1285,10 @@ function followEventsWhilePlaying() {
 store.waitForReady().then(() => store.addFrameCallback(followEventsWhilePlaying));
 watch(timePlaying, (playing) => {
   if (playing) {
+    // playing from the intro plays the mission, from launch
+    if (showTour.value && tour.stepIndex.value < INTRO_STEPS) {
+      store.setTime(VOYAGER_1_EVENTS[0].date);
+    }
     followEventsWhilePlaying(); // before the clock moves, or its first frame runs at the old rate
   }
 });
@@ -1312,7 +1322,9 @@ const tourSheetTour = {
 
 // the step's slider: its event's window (it holds no other event), within the data
 const stepWindow = computed(() => {
-  const { start, end } = eventWindow(VOYAGER_1_EVENTS, tour.stepIndex.value);
+  const i = tour.stepIndex.value;
+  // the intro has its own window; a mission event's depends on its neighbors in date order
+  const { start, end } = i < INTRO_STEPS ? TOUR_EVENTS[i].window! : eventWindow(VOYAGER_1_EVENTS, i - INTRO_STEPS);
   return {
     start: new Date(Math.max(start.getTime(), voyagerSpan.start.getTime())),
     end: new Date(Math.min(end.getTime(), voyagerSpan.end.getTime())),
