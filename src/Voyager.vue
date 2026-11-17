@@ -124,7 +124,7 @@
                 size="1x"
               />
               <!-- zoom, as in artemis-ii: top of the slider is zoomed in -->
-              <div id="zoom-controls">
+              <div v-if="!showTour" id="zoom-controls">
                 <button
                   class="zoom-button"
                   aria-label="Zoom in"
@@ -299,6 +299,7 @@
               />
               <MissionTimeSlider
                 v-else
+                v-show="!TOUR_EVENTS[tour.stepIndex.value]?.noSlider"
                 id="event-slider"
                 :class="{ 'outside-step': outsideStepWindow }"
                 :inert="outsideStepWindow"
@@ -1139,7 +1140,7 @@ const {
   initializePrompt,
 } = useUserExperienceRating(STORY_NAME, userID, {
   responseOptOut,
-  timeout: 45_000,
+  timeout: 60_000, // lets not use it for now,
   questions: ["How do you like this app?"],
   mixin: false,
 });
@@ -2059,5 +2060,9 @@ body {
   .privacy-footer-buttons {
     flex-wrap: nowrap;
   }
+}
+
+.app-is-small .tour-sheet.info-box {
+  margin: 0;
 }
 </style>
