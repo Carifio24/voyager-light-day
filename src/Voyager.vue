@@ -770,7 +770,7 @@ function createVoyagerLayer() {
 
 // time sliders: the whole file, in 1 minute steps
 const voyagerSpan = voyager2Table.timeSpan; // voyager 2 is longer
-voyagerSpan.end = new Date("Dec 31 2026 23:59:59 UTC"); // Cut off time after 2026.
+voyagerSpan.end = new Date("Dec 31 2037 23:59:59 UTC"); // Cut off time after 2037 (the data goes on to 2099)
 const SLIDER_STEP_MS = 60 * 1000;
 
 import * as THREE from "three";
@@ -990,10 +990,10 @@ function updateVoyagerLightTime(time: Date) {
 const timePlaying = ref(false);
 const playbackRate = ref(1000); // 1000x real time
 
-function stopAtEnd() {
+/** playback past the end of the timeline loops back to launch and keeps playing */
+function loopAtEnd() {
   if (timePlaying.value && SpaceTimeController.get_now() > voyagerSpan.end) {
-    timePlaying.value = false;
-    store.setTime(new Date(voyagerSpan.end.getTime() - 1000));
+    store.setTime(VOYAGER_1_EVENTS[0].date);
   }
 }
 
@@ -1034,7 +1034,7 @@ function setUpVoyagerScene() {
     setVoyager2ModelPosition(now);
     voyager1Location.value = voyager1PositionAt(time);
     voyager2Location.value = voyager2PositionAt(time);
-    stopAtEnd();
+    loopAtEnd();
   });
   useThreeModel(store, glbUrl, renderThree, (model) => (voyager1Model = model));
   useThreeModel(store, glbUrl, renderThree, (model) => (voyager2Model = model));
@@ -1308,7 +1308,8 @@ function followEventsWhilePlaying() {
 store.waitForReady().then(() => store.addFrameCallback(followEventsWhilePlaying));
 watch(timePlaying, (playing) => {
   if (playing) {
-    // playing from the intro plays the mission, from launch
+    // playing from the intro plays the mission, from launch (from the last stop on, it plays to the
+    // end of the timeline and loops back: loopAtEnd)
     if (showTour.value && tour.stepIndex.value < INTRO_STEPS) {
       store.setTime(VOYAGER_1_EVENTS[0].date);
     }
