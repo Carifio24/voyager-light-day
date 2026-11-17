@@ -285,6 +285,7 @@
                 hide-set-time
                 hide-status
                 :color="accentColor"
+                hide-rate-changers
               />
               <!-- the whole mission, log in time since launch -->
               <MissionTimeSlider
@@ -636,7 +637,7 @@ const cssVars = computed(() => {
     "--accent-color": accentColor.value,
     "--accent-color-2": accentColor2.value,
     "--drawer-width": `${DRAWER_WIDTH_FRACTION}vw`,
-    "--drawer-bottom-height": `${DRAWER_HEIGHT_FRACTION}vh`,
+    "--drawer-bottom-height": `${DRAWER_HEIGHT_FRACTION}svh`, // svh: never taller than the drawerHeight px vuetify reserves, URL bar or not
   } as StyleValue;
 });
 
@@ -1953,5 +1954,42 @@ body {
   background-color: rgb(var(--v-theme-cosmicds-blue));
   border-radius: 10px;
   padding: 0.25em 0.75em;
+}
+
+.app-is-small #wwt-overlay {
+  padding-inline: 0.5rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.25rem;
+}
+
+// short views (e.g. the bottom drawer plus the opt-out footer): the zoom slider gives up height so #bottom-content isn't pushed under the drawer
+.app-is-small #top-content {
+  min-height: 0;
+}
+
+.app-is-small #left-buttons {
+  max-height: 100%;
+}
+
+.app-is-small #zoom-controls {
+  padding-top: 0;
+  gap: 0.25rem;
+  min-height: 0;
+
+  .zoom-slider {
+    flex: 0 1 120px;
+    min-height: 40px;
+  }
+}
+
+// a slimmer opt-out footer: tighter padding, Allow/Opt Out side by side
+#app.app-is-small .v-footer.privacy-footer {
+  padding: 4px 8px;
+  gap: 0.5rem;
+  line-height: 1.3;
+
+  .privacy-footer-buttons {
+    flex-wrap: nowrap;
+  }
 }
 </style>
