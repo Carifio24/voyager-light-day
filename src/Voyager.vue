@@ -1681,6 +1681,11 @@ body {
 #event-slider {
   flex: 1 1 400px;
   min-width: 0;
+  // level with the time buttons, not the rate line under them: at the top, as tall as the
+  // 35px button row (which tops the time control), with the track centered in it.
+  // start, not flex-start, which wrap-reverse would flip to the bottom
+  align-self: start;
+  height: 35px;
 }
 
 // small screens: controls go under the timeline. column-reverse keeps the DOM
@@ -1710,6 +1715,9 @@ body {
 
   #event-slider {
     flex: 0 0 auto;
+    // stacked here, so back to full width at its own height
+    align-self: stretch;
+    height: auto;
   }
 }
 

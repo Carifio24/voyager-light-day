@@ -46,7 +46,6 @@
         @slow-down="(r) => (rate = r)"
         @set-rate="(r) => (rate = r)"
       />
-      {{ niceRate(rate, 0) }}
       <v-btn
         v-if="!hideNow"
         class="text-none wwt-now-button"
@@ -58,6 +57,9 @@
       >
         Now
       </v-btn>
+    </div>
+    <div class="wwt-rate">
+      Rate: {{ niceRate(rate, 0) }}{{ playing ? "" : " (paused)" }} 
     </div>
   </fieldset>
 </template>
@@ -193,6 +195,10 @@ fieldset#wwt-time-control {
     font-size: 15px !important;
     width: 15px !important;
     height: 15px !important;
+  }
+
+  .wwt-rate {
+    text-align: center;
   }
 
   // match the 2px borders on the icon buttons (vuetify's outlined default is thin, 1px)
