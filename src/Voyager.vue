@@ -87,6 +87,18 @@
             <div id="left-buttons">
               <icon-button
                 v-if="!showTour"
+                v-model="showTour"
+                class="sheet-toggle tour-button"
+                icon="signs-post"
+                aria-label="Show Tour"
+                :color="accentColor"
+                :focus-color="accentColor"
+                tooltip-text="Show Tour"
+                tooltip-location="start"
+                size="1x"
+              />
+              <icon-button
+                v-if="!showTour"
                 class="sheet-toggle user-guide-button"
                 :model-value="showTextSheet && infoSheetTab === 'user-guide'"
                 icon="question"
@@ -97,18 +109,6 @@
                 tooltip-location="start"
                 size="1x"
                 @activate="() => toggleInfoSheetTab('user-guide')"
-              />
-              <icon-button
-                v-if="!showTour"
-                v-model="showTour"
-                class="sheet-toggle tour-button"
-                icon="signs-post"
-                aria-label="Show Tour"
-                :color="accentColor"
-                :focus-color="accentColor"
-                tooltip-text="Show Tour"
-                tooltip-location="start"
-                size="1x"
               />
               <!-- zoom, as in artemis-ii: top of the slider is zoomed in -->
               <div id="zoom-controls">
