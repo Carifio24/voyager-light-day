@@ -403,6 +403,7 @@
           >
             <p
               v-for="(paragraph, i) in step.text"
+              class="tour-step-text"
               :key="i"
             >
               {{ paragraph }}
@@ -437,7 +438,7 @@
          it can be userful to move complex content into a separate component
          -->
         <tab-page
-          title="User Guide"
+          title="App Info"
           value="user-guide"
         >
           <user-guide @change-privacy-settings="showPrivacyPolicyInfo = true" />
@@ -1170,7 +1171,7 @@ const tour = useTour<TourStepContent>({
   steps: TOUR_EVENTS.map((event) => ({
     id: event.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
     title: event.title,
-    text: [event.caption],
+    text: Array.isArray(event.caption) ? event.caption : [event.caption],
     event,
     setup: async () => {
       store.waitForReady().then(() => {
@@ -2069,5 +2070,9 @@ body {
 
 .app-is-small .tour-sheet.info-box {
   margin: 0;
+}
+
+.tour-step-text {
+  margin-top: 1rem;
 }
 </style>

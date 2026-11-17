@@ -21,7 +21,7 @@ export const INTERSTITIAL_RATE = 20000000;
 
 export interface MissionEvent {
   title: string;
-  caption: string;
+  caption: string | string[];
   date: Date;
   image: string;
   imageUrl?: string;
@@ -477,7 +477,7 @@ export const LIGHT_DAY_INTRO: MissionEvent = {
   // TODO: placeholder title and caption, to be written
   title: "One Light Day Milestone!",
   noSlider: true,
-  caption: `On November 18, 2026, 10:16 UT, NASA’s beloved Voyager 1 spacecraft will reach an extraordinary milestone of one light-day from Earth—a distance so vast (16 billion miles!) that a message traveling at the speed of light takes a full 24 hours to reach us.`,
+  caption: ["On November 18, 2026, 10:16 UT, NASA’s beloved Voyager 1 spacecraft will reach an extraordinary milestone of one light-day from Earth—a distance so vast (16 billion miles!) that a message traveling at the speed of light takes a full 24 hours to reach us.", "This tour takes you through key moments of Voyager's journey, from launch until the present."],
   date: ONE_LIGHT_DAY,
   image: celebrate,
   credit: "Devika Elakara (Diagram NOT to scale!)",
