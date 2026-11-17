@@ -292,38 +292,45 @@
                 hide-time
               />
             </div>
-            <!-- the countdown opens above its button, mirroring #frame-controls below the controls button -->
-            <div id="countdown-control">
-              <icon-button
-                v-model="showCountdown"
-                class="sheet-toggle"
-                :icon="showCountdown ? 'xmark' : 'alarm-clock'"
-                :aria-label="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
-                :color="accentColor"
-                :focus-color="accentColor"
-                :tooltip-text="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
-                tooltip-location="start"
-                size="1x"
-              />
-              <div
-                v-if="showCountdown"
-                id="countdown-panel"
-              >
-                <LightDayCountdown
-                  v-slot="{ time, past }"
-                  :target="ONE_LIGHT_DAY"
+            <!-- the countdown opens above its button, mirroring #frame-controls below the controls button.
+                 On small screens it'd push the time controls off center, so it moves up under the controls button -->
+            <Teleport
+              to="#right-buttons"
+              :disabled="!smallSize"
+              defer
+            >
+              <div id="countdown-control">
+                <icon-button
+                  v-model="showCountdown"
+                  class="sheet-toggle"
+                  :icon="showCountdown ? 'xmark' : 'alarm-clock'"
+                  :aria-label="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
+                  :color="accentColor"
+                  :focus-color="accentColor"
+                  :tooltip-text="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
+                  tooltip-location="start"
+                  size="1x"
+                />
+                <div
+                  v-if="showCountdown"
+                  id="countdown-panel"
                 >
-                  <template v-if="past">
-                    Voyager 1 reached one light-day from Earth
-                    <span class="light-day-countdown">{{ time }}</span> ago
-                  </template>
-                  <template v-else>
-                    Voyager 1 will reach one light-day from Earth in
-                    <span class="light-day-countdown">{{ time }}</span>
-                  </template>
-                </LightDayCountdown>
+                  <LightDayCountdown
+                    v-slot="{ time, past }"
+                    :target="ONE_LIGHT_DAY"
+                  >
+                    <template v-if="past">
+                      Voyager 1 reached one light-day from Earth
+                      <span class="light-day-countdown">{{ time }}</span> ago
+                    </template>
+                    <template v-else>
+                      Voyager 1 will reach one light-day from Earth in
+                      <span class="light-day-countdown">{{ time }}</span>
+                    </template>
+                  </LightDayCountdown>
+                </div>
               </div>
-            </div>
+            </Teleport>
           </div>
 
           <!-- credit logos $logo-credits.cds-bottom-credits -->
@@ -571,6 +578,9 @@ const splash = urlState.get("splash")?.toLowerCase() !== "false";
 const showSplashScreen = ref(splash);
 const showControls = ref(false);
 const showCountdown = ref(false);
+// on small screens both open below the top-right buttons, in the same place: one at a time
+watch(showControls, (open) => open && smallSize.value && (showCountdown.value = false));
+watch(showCountdown, (open) => open && smallSize.value && (showControls.value = false));
 
 const showWebGL2Warning = ref(false);
 
@@ -1562,6 +1572,12 @@ body {
 #countdown-panel {
   bottom: calc(100% + 10px);
   text-align: center;
+}
+
+// small screens: the button's at the top right (teleported), so the panel opens below it, like #frame-controls
+.app-is-small #countdown-panel {
+  bottom: auto;
+  top: calc(100% + 10px);
 }
 
 #frame-controls {
