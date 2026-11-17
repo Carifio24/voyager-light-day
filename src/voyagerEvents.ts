@@ -236,8 +236,8 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     view: {
       time: "1979-03-05T15:14:00.000Z",
       track: 10,
-      lat: -17.0179453125001,
-      lng: 267.48696811294144,
+      lat: 65.52337499999985,
+      lng: 334.73444767076717,
       zoom: 0.0008728047173074942,
       rotation: 0,
       angle: 0,

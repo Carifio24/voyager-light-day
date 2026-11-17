@@ -180,6 +180,7 @@
                 @activate="fullscreen = !fullscreen"
               />
               <icon-button
+                v-if="!showTour"
                 v-model="showControls"
                 class="sheet-toggle"
                 :icon="showControls ? 'xmark' : 'sliders'"
