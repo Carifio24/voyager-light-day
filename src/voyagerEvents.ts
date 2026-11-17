@@ -157,14 +157,19 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
   },
   {
     title: "Earth and Moon",
-    caption: `This picture of a crescent-shaped Earth and Moon -- the first of
-      its kind ever taken by a spacecraft -- was recorded Sept. 18, 1977, by
-      NASA's Voyager 1 when it was 7.25 million miles (11.66 million
-      kilometers) from Earth. The Moon is at the top of the picture and beyond
-      the Earth as viewed by Voyager. In the picture are eastern Asia, the
-      western Pacific Ocean and part of the Arctic. Voyager 1 was directly
-      above Mt. Everest (on the night side of the planet at 25 degrees north
-      latitude) when the picture was taken.`,
+    // caption: `This picture of a crescent-shaped Earth and Moon -- the first of
+    //   its kind ever taken by a spacecraft -- was recorded Sept. 18, 1977, by
+    //   NASA's Voyager 1 when it was 7.25 million miles (11.66 million
+    //   kilometers) from Earth. The Moon is at the top of the picture and beyond
+    //   the Earth as viewed by Voyager. In the picture are eastern Asia, the
+    //   western Pacific Ocean and part of the Arctic. Voyager 1 was directly
+    //   above Mt. Everest (on the night side of the planet at 25 degrees north
+    //   latitude) when the picture was taken.`,
+    caption: `On Sept 18, 1977, just 2 weeks after launch, 
+      Voyager 1 to this picture of a crescent-shaped Earth and Moon -- the 
+      first image of its kind ever taken or seen by humanity. Voyager 1 was 
+      7.25 million miles (11.66 million kilometers) from Earth when it captured this image.`,
+    
     date: new Date("1977-09-18T22:20:00Z"),
     image: earthMoon,
     imageUrl: "https://science.nasa.gov/photojournal/crescent-earth-and-moon/",
@@ -188,12 +193,11 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
   },
   {
     title: "Jupiter closest approach",
-    caption: `Voyager 1 took this photo of Jupiter and two of its satellites
-      (Io, left, and Europa) on Feb. 13, 1979. Io is about 350,000 kilometers
-      (220,000 miles) above Jupiter's Great Red Spot; Europa is about 600,000
-      kilometers (375,000 miles) above Jupiter's clouds. Although both
+    caption: `Voyager 1 took this photo of Jupiter and two of its moons
+      (Io, left, and Europa) on Feb. 13, 1979, a couple weeks before it made it's closest approach to Jupiter. 
+      Just behind Io, you can see Jupiter's "Great Red Spot", which Voyager discovered was a massive storm! Although both
       satellites have about the same brightness, Io's color is very different
-      from Europa's.`,
+      from Europa's indicating different histories and compositions.`,
     date: new Date("1979-03-05T12:05:00Z"),
     image: jupiter,
     imageUrl: "https://science.nasa.gov/photojournal/jupiter-with-satellites-io-and-europa/",
@@ -217,13 +221,11 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
   },
   {
     title: "Io's volcanoes",
-    caption: `Voyager 1 acquired this image of Io on March 4 at 5:30 p.m. (PST)
-      about 11 hours before closest approach to the Jupiter moon. The distance
-      to Io was about 490,000 kilometers (304,000 miles). An enormous volcanic
-      explosion can be seen silhouetted against dark space over Io's bright
-      limb. The brightness of the plume has been increased by the computer as
-      it is normally extremely faint, whereas the relative color of the plume
-      (greenish white) has been preserved.`,
+    caption: `Voyager 1 took this image of Io on March 4 at 5:30 p.m. (PST)
+      about 11 hours before closest approach to the Jupiter moon. An enormous volcanic
+      explosion can be seen silhouetted against dark space on the edge of Io. The volcanic plumes were first 
+      discovered in Voyager 1's images by Linda Morabito at JPL. Io was our first
+      direct ovservation of active volcanos beyond the Earth.`,
     date: new Date("1979-03-05T15:14:00Z"),
     image: io,
     imageUrl: "https://science.nasa.gov/photojournal/volcanic-explosion-on-io/",
@@ -276,10 +278,8 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     title: "Saturn closest approach",
     caption: `Possible variations in chemical composition from one part of
       Saturn's ring system to another are visible in this Voyager 2 picture as
-      subtle color variations that can be recorded with special
-      computer-processing techniques. This highly enhanced color view was
-      assembled from clear, orange and ultraviolet frames obtained Aug. 17,
-      1981, from a distance of 8.9 million kilometers (5.5 million miles).`,
+      subtle color variations. In this enhanced color view the more water-rich a region is the more blue it appears. 
+      Voyager 1 made similar observations during its flyby of Saturn`,
     date: new Date("1980-11-12T23:46:00Z"),
     image: saturn,
     imageUrl: "https://science.nasa.gov/photojournal/composition-differences-within-saturns-rings/",
