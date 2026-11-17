@@ -10,8 +10,8 @@
       density="compact"
       hide-details
       color="white"
-      track-fill-color="primary"
-      thumb-color="primary"
+      :track-fill-color="color ?? 'primary'"
+      :thumb-color="color ?? 'primary'"
       :aria-label="label ?? 'Mission time'"
       @keydown="onKeydown"
       @update:model-value="(f: number) => setTime(toTime(f))"
@@ -41,6 +41,8 @@ const props = defineProps<{
   label?: string;
   /** leave out the current time (when the page shows it elsewhere) */
   hideTime?: boolean;
+  /** theme color of the filled track and the thumb. Default primary */
+  color?: string;
 }>();
 
 const store = engineStore();

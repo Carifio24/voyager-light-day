@@ -95,7 +95,8 @@ export default createVuetify({
           primary: "#DEBA68",
           secondary: "#583671",
           border: "#FDF5C2",
-          contrast: "#C4CBFD",
+          // lavender, the tour's accent: its sheet and its step slider
+          "tour-accent": "#C4CBFD",
           ...COSMICDS_COLORS,
         },
       },

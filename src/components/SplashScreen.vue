@@ -152,7 +152,7 @@ function closeSplashScreen() {
   // https://piccalil.li/blog/fluid-typography-with-css-clamp/,
   // https://www.kevinpowell.co/article/typographic-scale/. also see Scott
   --scale: 1.3333; // perfect fourth
-  --fs-0: min(9vw, 6vh); // title / lead-in - .splash-overlay's font-size, inherited
+  --fs-0: min(min(9vw, 6vh), 48px); // title / lead-in - .splash-overlay's font-size, inherited
   --fs-1: calc(var(--fs-0) / var(--scale)); // description
   --fs-2: calc(var(--fs-1) / var(--scale)); // button label
   --fs-3: calc(var(--fs-2) / var(--scale));

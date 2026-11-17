@@ -36,15 +36,18 @@
         ref="speedControlRef"
         v-model="playing"
         class="wwt-speed-control"
+        :class="{'no-rate-controls': hideRateChangers, 'hide-reverse': hideReverse}"
         :store="store"
         :default-rate="1000"
         :max-speed="100000000"
         :show-status="!hideStatus"
+        :rate-delta="2"
         :color="color"
         hide-more-controls
         @speed-up="(r) => (rate = r)"
         @slow-down="(r) => (rate = r)"
         @set-rate="(r) => (rate = r)"
+        @update:reverse="(r) => (reverse = r)"
       />
       <v-btn
         v-if="!hideNow"
@@ -91,11 +94,17 @@ defineProps<{
   hideNow?: boolean;
   /** button color (CSS color). */
   color?: string;
+  /** hide the rate changers */
+  hideRateChangers?: boolean;
+  /** hide reverse */
+  hideReverse?: boolean;
 }>();
 
 // whether time is running. v-model so the parent can pause it (e.g. when scrubbing)
 const playing = defineModel<boolean>({ default: false });
 const rate = defineModel<number>("rate", { required: true, default: 1 });
+// SpeedControl's reverse button
+const reverse = defineModel<boolean>("reverse", { default: false });
 
 function isoString(date: Date) {
   return date.toISOString().replace("Z", "").split(".")[0] as string;
@@ -220,6 +229,23 @@ fieldset#wwt-time-control {
       width: 12px !important;
       height: 12px !important;
     }
+  }
+}
+
+.wwt-speed-control.hide-reverse #speed-buttons {
+
+  > .icon-wrapper:first-child {
+    display: none;
+  }
+}
+
+.wwt-speed-control.no-rate-controls #speed-buttons {
+
+  > #slow-down.icon-wrapper {
+    display: none;
+  }
+  > #speed-up.icon-wrapper {
+    display: none;
   }
 }
 </style>
