@@ -286,7 +286,6 @@
                 :start="voyagerSpan.start"
                 :end="voyagerSpan.end"
                 :step-ms="SLIDER_STEP_MS"
-                :log-scale-days="100"
                 hide-time
                 @mousedown="missionSliderUses.increment()"
               />
