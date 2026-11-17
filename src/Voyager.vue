@@ -87,19 +87,6 @@
             <div id="left-buttons">
               <icon-button
                 v-if="!showTour"
-                class="sheet-toggle learn-more-button"
-                :model-value="showTextSheet && infoSheetTab === 'information'"
-                icon="book-open"
-                aria-label="Learn More"
-                :color="accentColor"
-                :focus-color="accentColor"
-                tooltip-text="Learn More"
-                tooltip-location="start"
-                size="1x"
-                @activate="() => toggleInfoSheetTab('information')"
-              />
-              <icon-button
-                v-if="!showTour"
                 class="sheet-toggle user-guide-button"
                 :model-value="showTextSheet && infoSheetTab === 'user-guide'"
                 icon="question"
@@ -352,7 +339,7 @@
     </v-main>
 
     <!--
-    This contains the informational content that is displayed when the book icon is clicked.
+    This contains the tour and the user guide.
     It's an in-flow flex sibling of #main-content, so opening it shrinks the WWT view
     (from the side normally, from the bottom on small screens) instead of covering it.
   -->
@@ -436,14 +423,6 @@
         align-tabs="start"
         @close="showTextSheet = false"
       >
-        <!-- tab-page content is wrapped in a .tab-page class  -->
-        <tab-page title="Information">
-          <!-- everything inside the tab-page is wrapped in a div with class "tab-page" -->
-          <!-- we generally use heading level 3 (the same level as the tabs) -->
-          <h3>Science Information</h3>
-          <p>Sample Science Information</p>
-        </tab-page>
-
         <!-- the user guide is an <TabPage title="User Guide" value="user-guide>...</TabPage>"
          it can be userful to move complex content into a separate component
          -->
@@ -1368,7 +1347,7 @@ mutuallyExclusive(showTour, showTextSheet, showUserGuideSheet);
 // itself. Its class lands on the tooltip too, hence `button.`.
 const drawerOpenerClass = computed(() => {
   if (showTour.value) return "tour-button";
-  if (showTextSheet.value) return infoSheetTab.value === "user-guide" ? "user-guide-button" : "learn-more-button";
+  if (showTextSheet.value) return "user-guide-button"; // the text sheet's only tab
   return null;
 });
 watch(drawerOpenerClass, (now, before) => {
