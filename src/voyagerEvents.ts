@@ -13,6 +13,7 @@ import terminationShock from "@/assets/voyager/termination-shock.jpg";
 import interstellar from "@/assets/voyager/interstellar.jpg";
 import lightDay from "@/assets/voyager/light-day.jpg";
 import trajectory from "@/assets/voyager/voyager_trajectories_jpl_caltech.png";
+import celebrate from "@/assets/voyager/voyager-light-day-elakara.png";
 
 import { ViewSpec } from "./types";
 
@@ -471,9 +472,8 @@ export const LIGHT_DAY_INTRO: MissionEvent = {
   title: "One Light Day Milestone!",
   caption: `On November 18, 2026, 10:16 UT, NASA’s beloved Voyager 1 spacecraft will reach an extraordinary milestone of one light day from Earth—a distance so vast (16 billion miles!) that a message traveling at the speed of light takes a full 24 hours to reach us.`,
   date: ONE_LIGHT_DAY,
-  image: lightDay,
-  imageUrl: "https://science.nasa.gov/photojournal/voyager-goes-interstellar-artist-concept/",
-  credit: "NASA/JPL-Caltech",
+  image: celebrate,
+  credit: "Devika Elakara (Diagram NOT to scale!)",
   imageTaken: "artist's concept, 2013",
   track: SolarSystemObjects.sun,
   // as eventWindow gives the last stop: 2 days either side
