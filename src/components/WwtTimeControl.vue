@@ -62,7 +62,7 @@
       </v-btn>
     </div>
     <div class="wwt-rate">
-      Rate: {{ niceRate(rate, 0) }}{{ playing ? "" : " (paused)" }} 
+      Rate: {{ niceRate(rate, 0) }}{{ playing ? "" : " (paused)" }}
     </div>
   </fieldset>
 </template>
@@ -75,7 +75,7 @@ import { niceRate } from "../readable_rates";
 
 const store = engineStore();
 
-defineEmits<{
+const emit = defineEmits<{
   (e: "play" | "pause"): void;
   (e: "rate-change", rate: number): void;
 }>();
@@ -151,6 +151,14 @@ onMounted(() => {
   watch(playbackRate, (r) => {
     rate.value = r;
   });
+});
+
+watch(playing, (play: boolean) => {
+  if (play) {
+    emit("play");
+  } else {
+    emit("pause");
+  }
 });
 
 const setTime = () => store.setTime(new Date(selectedDateTime.value + "Z"));

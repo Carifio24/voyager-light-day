@@ -286,6 +286,7 @@
                 hide-status
                 :color="accentColor"
                 hide-rate-changers
+                @play="playClickedCount += 1"
               />
               <!-- the whole mission, log in time since launch -->
               <MissionTimeSlider
@@ -556,7 +557,13 @@ import type { StyleValue } from "vue";
 import { watchThrottled } from "@vueuse/core";
 import { WWTControl } from "@wwtelescope/engine";
 import { WWTComponent as WorldWideTelescope, engineStore } from "@wwtelescope/engine-pinia";
-import { useWWTKeyboardControls, useFullscreen, IconButton, CreditLogos } from "@cosmicds/vue-toolkit";
+import {
+  useWWTKeyboardControls,
+  useFullscreen,
+  IconButton,
+  CreditLogos,
+  useDataTracking,
+} from "@cosmicds/vue-toolkit";
 
 const extraLogos = [
   {
@@ -736,7 +743,7 @@ function applyTrack(target: TrackTarget) {
 }
 watch(trackingCenter, applyTrack);
 const VOYAGER_2_COLOR = "#00ffff";
-const VOYAGER_1_COLOR = "#ffda8a"; 
+const VOYAGER_1_COLOR = "#ffda8a";
 let voyager1Line: TrajectoryLine | null = null;
 let voyager2Line: TrajectoryLine | null = null;
 const showV1 = ref(true);
@@ -1075,6 +1082,8 @@ import { useGtagConsent } from "./privacy/useGtagConsent";
 // opt-out by default (US-style); index.html's region-scoped defaults keep EU visitors opted out until they say otherwise
 const gtagConsent = useGtagConsent(true);
 
+const showTour = ref(false);
+
 /** app tracking setup */
 const STORY_NAME = "voyager" as const;
 const appTime = createTrackingTimer({ active: ref(true) });
@@ -1082,19 +1091,29 @@ const missionSliderUses = createTrackingCounter();
 const userGuideTime = createTrackingTimer({
   active: computed(() => showTextSheet.value && infoSheetTab.value === "user-guide"),
 });
+const tourTimer = createTrackingTimer({ active: showTour });
+let maxTourStep: number | null = null;
 
 function resetTrackingData() {
   appTime.reset();
   userGuideTime.reset();
   missionSliderUses.reset();
+  tourTimer.reset();
+  maxTourStep = null;
 }
 
 function getTrackingData() {
-  return {
+  const data: Record<string, unknown> = {
     app_time_ms: appTime.getTotalTime(),
     user_guide_time_ms: userGuideTime.getTotalTime(),
+    tour_time_ms: tourTimer.getTotalTime(),
     mission_slider_use_count: missionSliderUses.count.value,
   };
+  if (maxTourStep != null) {
+    data.max_tour_step = maxTourStep;
+  }
+
+  return data;
 }
 
 const {
@@ -1141,7 +1160,6 @@ const {
 const showRatingDialog = computed(() => showRating.value && !showSplashScreen.value && !showDataCollectionOptOut.value);
 
 // tour setup //
-const showTour = ref(false);
 
 import { TourSheet, useTour, type BaseTourStepContent } from "@cosmicds/vue-toolkit";
 
@@ -1204,6 +1222,10 @@ const tour = useTour<TourStepContent>({
   })),
 });
 urlState.track("tour", tour.stepID);
+
+watch(tour.stepIndex, (index: number) => {
+  maxTourStep = Math.max(maxTourStep, index);
+});
 
 // playback //
 // While playing, a frame callback sets the clock rate and the camera for wherever the clock is.
@@ -1273,7 +1295,7 @@ function playbackRateAt(time: Date, backward = false): number {
 
   // what events are in this window.
   const events = getEventsInWindow(window);
-  
+
   const speedMultiplier = (showTour.value ? 1 : 2);
 
   // get the highest valid rate
@@ -1324,7 +1346,7 @@ function followEventsWhilePlaying() {
 
   const backward = playbackReversed.value;
   setClockRate((backward ? -1 : 1) * playbackRateAt(now, backward));
-  
+
   const step = eventForTime(VOYAGER_1_EVENTS, now);
 
   // if not in tour - don't do tour things
@@ -1462,6 +1484,8 @@ function closeSplashScreen() {
   // pass `true` to only show it once per session, even if the user does not respond (for example if it shows up after an intro sequence)
   conditionalShowPrivacyDialog();
 }
+
+let playClickedCount = 0;
 </script>
 
 <style lang="less">
