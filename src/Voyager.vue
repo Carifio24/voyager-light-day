@@ -768,10 +768,12 @@ const SLIDER_STEP_MS = 60 * 1000;
 import * as THREE from "three";
 import { useThreeModel } from "./three-helpers";
 import glbUrl from "@/assets/Voyager.glb?url";
+import helioGlb from "@/assets/merav.glb?url";
 
 const renderThree = ref(true);
 let voyager1Model: THREE.Group | null = null;
 let voyager2Model: THREE.Group | null = null;
+let heliosphereModel: THREE.Group | null = null;
 // log10 of the models' magnification (0 is actual size)
 const modelLogScale = ref(7);
 const MIN_MODEL_SCALE = 3; // log10 of the model's magnification (0 is actual size)
@@ -915,6 +917,15 @@ function setVoyager2ModelPosition(time: Date) {
   voyager2Model.scale.setScalar(scale / METERS_PER_AU);
 }
 
+/** The heliosphere model on the Sun. The three.js scene is relative to the view target, so this follows tracking */
+function setHeliosphereModelPosition() {
+  if (!heliosphereModel) {
+    return;
+  }
+  const sun = bodyCenterInScene(SolarSystemObjects.sun);
+  heliosphereModel.position.set(sun.x, sun.z, sun.y);
+}
+
 // The top label (distance, date, and was/is/will be) follows the clock at most every LABEL_THROTTLE_MS,
 // so fast playback doesn't flicker its digits. Trailing, so it ends on the time the clock stops at
 const LABEL_THROTTLE_MS = 500;
@@ -1039,6 +1050,7 @@ function setUpVoyagerScene() {
     const time = now.getTime();
     setVoyager1ModelPosition(now);
     setVoyager2ModelPosition(now);
+    setHeliosphereModelPosition();
     voyager1Location.value = voyager1PositionAt(time);
     voyager2Location.value = voyager2PositionAt(time);
     loopAtEnd();
@@ -1046,6 +1058,10 @@ function setUpVoyagerScene() {
   });
   useThreeModel(store, glbUrl, renderThree, (model) => (voyager1Model = model));
   useThreeModel(store, glbUrl, renderThree, (model) => (voyager2Model = model));
+  useThreeModel(store, helioGlb, renderThree, (model) => {
+    model.scale.setScalar(1);
+    heliosphereModel = model;
+  });
 }
 
 // tracking //
