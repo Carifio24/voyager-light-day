@@ -1265,7 +1265,7 @@ function followEventsWhilePlaying() {
   setClockRate((backward ? -1 : 1) * playbackRateAt(now, backward));
   
   const step = eventForTime(VOYAGER_1_EVENTS, now);
-  
+
   // if not in tour - don't do tour things
   if (!showTour.value) {
     return;

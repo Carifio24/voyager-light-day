@@ -45,6 +45,7 @@
         @speed-up="(r) => (rate = r)"
         @slow-down="(r) => (rate = r)"
         @set-rate="(r) => (rate = r)"
+        @update:reverse="(r) => (reverse = r)"
       />
       {{ niceRate(rate, 0) }}
       <v-btn
@@ -94,6 +95,8 @@ defineProps<{
 // whether time is running. v-model so the parent can pause it (e.g. when scrubbing)
 const playing = defineModel<boolean>({ default: false });
 const rate = defineModel<number>("rate", { required: true, default: 1 });
+// SpeedControl's reverse button
+const reverse = defineModel<boolean>("reverse", { default: false });
 
 function isoString(date: Date) {
   return date.toISOString().replace("Z", "").split(".")[0] as string;
