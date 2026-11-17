@@ -562,7 +562,6 @@ import {
   useFullscreen,
   IconButton,
   CreditLogos,
-  useDataTracking,
 } from "@cosmicds/vue-toolkit";
 
 const extraLogos = [
@@ -1094,7 +1093,7 @@ const userGuideTime = createTrackingTimer({
 });
 const tourTimer = createTrackingTimer({ active: showTour });
 const countdownTimer = createTrackingTimer({ active: showCountdown });
-let maxTourStep: number | null = null;
+let maxTourStep = 0;
 
 function resetTrackingData() {
   appTime.reset();
@@ -1103,23 +1102,19 @@ function resetTrackingData() {
   tourTimer.reset();
   countdownTimer.reset();
   playClickedCounter.reset();
-  maxTourStep = null;
+  maxTourStep = 0;
 }
 
 function getTrackingData() {
-  const data: Record<string, unknown> = {
+  return {
     app_time_ms: appTime.getTotalTime(),
     user_guide_time_ms: userGuideTime.getTotalTime(),
     tour_time_ms: tourTimer.getTotalTime(),
     countdown_time_ms: countdownTimer.getTotalTime(),
     mission_slider_use_count: missionSliderUses.count.value,
     play_clicked_count: playClickedCounter.count.value,
+    max_tour_step: maxTourStep,
   };
-  if (maxTourStep != null) {
-    data.max_tour_step = maxTourStep;
-  }
-
-  return data;
 }
 
 const {
