@@ -40,6 +40,8 @@ export interface MissionEvent {
   fly?: boolean;
   // Rate (seconds per seconds)
   rate?: number;
+  /** hide the tour step's time slider at this stop */
+  noSlider?: boolean;
 }
 
 export interface TimeRange {
@@ -235,8 +237,8 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     view: {
       time: "1979-03-05T15:14:00.000Z",
       track: 10,
-      lat: -17.0179453125001,
-      lng: 267.48696811294144,
+      lat: 65.52337499999985,
+      lng: 334.73444767076717,
       zoom: 0.0008728047173074942,
       rotation: 0,
       angle: 0,
@@ -372,6 +374,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
   },
   {
     title: "Pale Blue Dot",
+    noSlider: true,
     caption: `This image shows an updated version of the iconic Pale Blue Dot
       image taken by the Voyager 1 spacecraft. Planet Earth is visible as a
       bright speck within the sunbeam just right of center and appears softly
@@ -396,6 +399,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
   },
   {
     title: "Termination shock",
+    noSlider: true,
     windowDays: 365,
     caption: `An artist's concept illustrates the positions of the Voyager
       spacecraft in relation to structures formed around our Sun by the solar
@@ -423,6 +427,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
   },
   {
     title: "Interstellar space",
+    noSlider: true,
     windowDays: 365,
     caption: `This artist's concept depicts NASA's Voyager 1 spacecraft entering
       interstellar space. Interstellar space is dominated by the plasma, or
@@ -449,6 +454,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
   },
   {
     title: "One light-day from Earth",
+    noSlider: true,
     caption: `Voyager 1 has entered interstellar space. NASA's spacecraft, which
       rose from Earth on a September morning 36 years ago, has traveled farther
       than anyone, or anything, in history.`,
@@ -470,6 +476,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
 export const LIGHT_DAY_INTRO: MissionEvent = {
   // TODO: placeholder title and caption, to be written
   title: "One Light Day Milestone!",
+  noSlider: true,
   caption: `On November 18, 2026, 10:16 UT, NASA’s beloved Voyager 1 spacecraft will reach an extraordinary milestone of one light day from Earth—a distance so vast (16 billion miles!) that a message traveling at the speed of light takes a full 24 hours to reach us.`,
   date: ONE_LIGHT_DAY,
   image: celebrate,

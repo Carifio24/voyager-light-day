@@ -111,7 +111,7 @@
                 @activate="() => toggleInfoSheetTab('user-guide')"
               />
               <!-- zoom, as in artemis-ii: top of the slider is zoomed in -->
-              <div id="zoom-controls">
+              <div v-if="!xs" id="zoom-controls">
                 <button
                   class="zoom-button"
                   aria-label="Zoom in"
@@ -180,6 +180,7 @@
                 @activate="fullscreen = !fullscreen"
               />
               <icon-button
+                v-if="!xs"
                 v-model="showControls"
                 class="sheet-toggle"
                 :icon="showControls ? 'xmark' : 'sliders'"
@@ -274,6 +275,7 @@
                 :color="accentColor"
                 hide-rate-changers
                 hide-home-button
+                :hide-now="showTour"
               />
               <!-- the whole mission, log in time since launch -->
               <MissionTimeSlider
@@ -287,6 +289,7 @@
               />
               <MissionTimeSlider
                 v-else
+                v-show="(!TOUR_EVENTS[tour.stepIndex.value]?.noSlider || sidePanel) && (!xs)"
                 id="event-slider"
                 :class="{ 'outside-step': outsideStepWindow }"
                 :inert="outsideStepWindow"
@@ -340,7 +343,7 @@
 
           <!-- credit logos $logo-credits.cds-bottom-credits -->
           <credit-logos
-            v-if="!xs"
+            v-if="!xs && !(showTour && !sidePanel)"
             class="cds-bottom-credits"
             :default-logos="['cosmicds', 'wwt', 'nasa']"
             :logo-size="xs ? '1.5em' : '2em'"
@@ -1107,6 +1110,13 @@ watch(responseOptOut, (newVal) => {
   }
 });
 
+watch(showDataCollectionOptOut, (isOpen, wasOpen) => {
+  // if we close it without answering, set responseOptOut to false (this is an opt out not an opt in)
+  if (wasOpen && !isOpen && responseOptOut.value === null) {
+    responseOptOut.value = false;
+  }
+});
+
 const {
   showRating,
   question,
@@ -1116,7 +1126,7 @@ const {
   initializePrompt,
 } = useUserExperienceRating(STORY_NAME, userID, {
   responseOptOut,
-  timeout: 45_000,
+  timeout: 60_000, // lets not use it for now,
   questions: ["How do you like this app?"],
   mixin: false,
 });
@@ -2046,5 +2056,9 @@ body {
   .privacy-footer-buttons {
     flex-wrap: nowrap;
   }
+}
+
+.app-is-small .tour-sheet.info-box {
+  margin: 0;
 }
 </style>
