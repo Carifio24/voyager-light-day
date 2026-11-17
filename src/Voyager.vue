@@ -286,7 +286,7 @@
                 hide-status
                 :color="accentColor"
                 hide-rate-changers
-                @play="playClickedCount += 1"
+                @play="playClickedCounter.increment()"
               />
               <!-- the whole mission, log in time since launch -->
               <MissionTimeSlider
@@ -1088,10 +1088,12 @@ const showTour = ref(false);
 const STORY_NAME = "voyager" as const;
 const appTime = createTrackingTimer({ active: ref(true) });
 const missionSliderUses = createTrackingCounter();
+const playClickedCounter = createTrackingCounter();
 const userGuideTime = createTrackingTimer({
   active: computed(() => showTextSheet.value && infoSheetTab.value === "user-guide"),
 });
 const tourTimer = createTrackingTimer({ active: showTour });
+const countdownTimer = createTrackingTimer({ active: showCountdown });
 let maxTourStep: number | null = null;
 
 function resetTrackingData() {
@@ -1099,6 +1101,8 @@ function resetTrackingData() {
   userGuideTime.reset();
   missionSliderUses.reset();
   tourTimer.reset();
+  countdownTimer.reset();
+  playClickedCounter.reset();
   maxTourStep = null;
 }
 
@@ -1107,7 +1111,9 @@ function getTrackingData() {
     app_time_ms: appTime.getTotalTime(),
     user_guide_time_ms: userGuideTime.getTotalTime(),
     tour_time_ms: tourTimer.getTotalTime(),
+    countdown_time_ms: countdownTimer.getTotalTime(),
     mission_slider_use_count: missionSliderUses.count.value,
+    play_clicked_count: playClickedCounter.count.value,
   };
   if (maxTourStep != null) {
     data.max_tour_step = maxTourStep;
@@ -1484,8 +1490,6 @@ function closeSplashScreen() {
   // pass `true` to only show it once per session, even if the user does not respond (for example if it shows up after an intro sequence)
   conditionalShowPrivacyDialog();
 }
-
-let playClickedCount = 0;
 </script>
 
 <style lang="less">
