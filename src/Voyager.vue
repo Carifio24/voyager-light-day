@@ -402,6 +402,7 @@
           >
             <p
               v-for="(paragraph, i) in step.text"
+              class="tour-step-text"
               :key="i"
             >
               {{ paragraph }}
@@ -1169,7 +1170,7 @@ const tour = useTour<TourStepContent>({
   steps: TOUR_EVENTS.map((event) => ({
     id: event.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
     title: event.title,
-    text: [event.caption],
+    text: Array.isArray(event.caption) ? event.caption : [event.caption],
     event,
     setup: async () => {
       store.waitForReady().then(() => {
@@ -2062,5 +2063,9 @@ body {
 
 .app-is-small .tour-sheet.info-box {
   margin: 0;
+}
+
+.tour-step-text {
+  margin-top: 1rem;
 }
 </style>
