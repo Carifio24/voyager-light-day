@@ -114,8 +114,14 @@
                 v-if="voyagerLightTime"
                 id="light-time"
               >
-                <div class="light-time-label">Voyager 1 Distance from Earth in Light Travel Time</div>
-                <div class="light-time-value">{{ voyagerLightTime }}</div>
+                <div class="light-time-label">Voyager 1's Distance from Earth:</div>
+                <div class="light-time-value mt-1">
+                  <span class="light-time-number">{{ voyagerLightTime }}</span>
+                  <span class="light-time-label"> at light speed</span>
+                </div>
+                <div class="light-time-label mt-2">
+                  on <span class="light-time-date">{{ shownDate }}</span>
+                </div>
               </div>
             </div>
             <div id="right-buttons">
@@ -217,6 +223,7 @@
                 :end="voyagerSpan.end"
                 :step-ms="SLIDER_STEP_MS"
                 :log-scale-days="100"
+                hide-time
                 @mousedown="missionSliderUses.increment()"
               />
               <MissionTimeSlider
@@ -225,6 +232,7 @@
                 :start="stepWindow.start"
                 :end="stepWindow.end"
                 :step-ms="SLIDER_STEP_MS"
+                hide-time
               />
             </div>
             <icon-button
@@ -241,7 +249,7 @@
             />
             <ClosableDialog
               v-model="showCountdown"
-              title="One light-day"
+              title="Countdown"
               max-width="320"
             >
               Voyager 1 is one light-day from Earth in
@@ -780,6 +788,17 @@ function setVoyager2ModelPosition(time: Date) {
 }
 
 const voyagerLightTime = ref("");
+// the clock's time, as "Nov 12, 1980, 23:46 UT". h23, since hour12: false can give "24:00" at midnight
+const SHOWN_DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+  timeZone: "UTC",
+});
+const shownDate = computed(() => `${SHOWN_DATE_FORMAT.format(store.currentTime)} UT`);
 
 /** seconds as "22 h 41 m 07 s" */
 function hoursMinutesSeconds(seconds: number): string {
@@ -1297,8 +1316,24 @@ body {
   }
 
   .light-time-value {
+    font-size: 16px;
+  }
+
+  .light-time-number {
     font-family: monospace;
-    font-size: 18px;
+  }
+
+  // neither the date nor "at light speed" breaks across lines
+  .light-time-date,
+  .light-time-unit {
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  // like the label line. Its leading space is the gap: Vue drops the newline between the spans
+  .light-time-unit {
+    font-size: 14px;
+    opacity: 0.8;
   }
 }
 
@@ -1326,16 +1361,6 @@ body {
 #event-slider {
   flex: 1 1 400px;
   min-width: 0;
-  // the current date on its own line, centered above the track
-  flex-wrap: wrap;
-  row-gap: 0;
-
-  .mission-time-now {
-    order: -1;
-    flex-basis: 100%;
-    text-align: center;
-    padding-top: 4px;
-  }
 }
 
 // small screens: controls go under the timeline. column-reverse keeps the DOM
@@ -1349,15 +1374,9 @@ body {
   align-items: stretch;
   margin-inline: auto;
 
+  // no scrubbing on small screens: just the buttons (the date is in #light-time)
   #mission-slider {
-    // the 400px basis above is a width; in a column it would become the height
-    flex: 0 0 auto;
-
-    // no scrubbing on small screens: only the current date is shown, above the buttons
-    .v-slider,
-    .mission-time-end {
-      display: none;
-    }
+    display: none;
   }
   
   .wwt-clock-controls {
@@ -1522,6 +1541,10 @@ body {
 
   .light-time-value {
     font-size: 15px;
+  }
+
+  .light-time-unit {
+    font-size: 11px;
   }
 }
 
