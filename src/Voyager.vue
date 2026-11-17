@@ -2066,6 +2066,6 @@ body {
 }
 
 .tour-step-text {
-  margin-top: 1rem;
+  margin-bottom: 0.5rem;
 }
 </style>
