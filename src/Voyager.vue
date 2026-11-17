@@ -1069,6 +1069,9 @@ watch(responseOptOut, (newVal) => {
   } else if (newVal === true) {
     gtagConsent.value = false;
   }
+  if (newVal !== null) { // answered: the footer's Allow / Opt Out don't close it themselves
+    showDataCollectionOptOut.value = false;
+  }
 });
 
 const {
