@@ -170,7 +170,7 @@ const setTime = () => store.setTime(new Date(selectedDateTime.value + "Z"));
 
 <style lang="less">
 fieldset#wwt-time-control {
-  --spacing: 1em;
+  --spacing: 0.5em;
   pointer-events: auto; // #wwt-overlay turns them off
   display: flex;
   flex-direction: column;

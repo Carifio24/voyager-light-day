@@ -158,7 +158,7 @@
                 id="light-time"
               >
                 <div class="light-time-label">Voyager 1's Light Speed Distance from Earth</div>
-                <div class="light-time-value my-1">
+                <div class="light-time-value">
                   <span class="light-time-label">{{ distanceVerb }}</span><span class="light-time-number">&emsp;{{ voyagerLightTime }}</span>
                 </div>
                 <div class="light-time-label">
@@ -180,7 +180,7 @@
                 @activate="fullscreen = !fullscreen"
               />
               <icon-button
-                v-if="!xs"
+                v-if="!showTour || !xs"
                 v-model="showControls"
                 class="sheet-toggle"
                 :icon="showControls ? 'xmark' : 'sliders'"
