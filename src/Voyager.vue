@@ -87,16 +87,15 @@
             <div id="left-buttons">
               <icon-button
                 v-if="!showTour"
-                class="sheet-toggle learn-more-button"
-                :model-value="showTextSheet && infoSheetTab === 'information'"
-                icon="book-open"
-                aria-label="Learn More"
+                v-model="showTour"
+                class="sheet-toggle tour-button"
+                icon="signs-post"
+                aria-label="Show Tour"
                 :color="accentColor"
                 :focus-color="accentColor"
-                tooltip-text="Learn More"
+                tooltip-text="Show Tour"
                 tooltip-location="start"
                 size="1x"
-                @activate="() => toggleInfoSheetTab('information')"
               />
               <icon-button
                 v-if="!showTour"
@@ -111,20 +110,8 @@
                 size="1x"
                 @activate="() => toggleInfoSheetTab('user-guide')"
               />
-              <icon-button
-                v-if="!showTour"
-                v-model="showTour"
-                class="sheet-toggle tour-button"
-                icon="signs-post"
-                aria-label="Show Tour"
-                :color="accentColor"
-                :focus-color="accentColor"
-                tooltip-text="Show Tour"
-                tooltip-location="start"
-                size="1x"
-              />
               <!-- zoom, as in artemis-ii: top of the slider is zoomed in -->
-              <div id="zoom-controls">
+              <div v-if="!xs" id="zoom-controls">
                 <button
                   class="zoom-button"
                   aria-label="Zoom in"
@@ -171,7 +158,7 @@
                 id="light-time"
               >
                 <div class="light-time-label">Voyager 1's Light Speed Distance from Earth</div>
-                <div class="light-time-value my-1">
+                <div class="light-time-value">
                   <span class="light-time-label">{{ distanceVerb }}</span><span class="light-time-number">&emsp;{{ voyagerLightTime }}</span>
                 </div>
                 <div class="light-time-label">
@@ -193,6 +180,7 @@
                 @activate="fullscreen = !fullscreen"
               />
               <icon-button
+                v-if="!showTour || !xs"
                 v-model="showControls"
                 class="sheet-toggle"
                 :icon="showControls ? 'xmark' : 'sliders'"
@@ -286,6 +274,8 @@
                 hide-status
                 :color="accentColor"
                 hide-rate-changers
+                hide-home-button
+                :hide-now="showTour"
                 @play="playClickedCounter.increment()"
               />
               <!-- the whole mission, log in time since launch -->
@@ -300,6 +290,7 @@
               />
               <MissionTimeSlider
                 v-else
+                v-show="(!TOUR_EVENTS[tour.stepIndex.value]?.noSlider || sidePanel) && (!xs)"
                 id="event-slider"
                 :class="{ 'outside-step': outsideStepWindow }"
                 :inert="outsideStepWindow"
@@ -310,43 +301,50 @@
                 hide-time
               />
             </div>
-            <!-- the countdown opens above its button, mirroring #frame-controls below the controls button -->
-            <div id="countdown-control">
-              <icon-button
-                v-model="showCountdown"
-                class="sheet-toggle"
-                :icon="showCountdown ? 'xmark' : 'alarm-clock'"
-                :aria-label="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
-                :color="accentColor"
-                :focus-color="accentColor"
-                :tooltip-text="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
-                tooltip-location="start"
-                size="1x"
-              />
-              <div
-                v-if="showCountdown"
-                id="countdown-panel"
-              >
-                <LightDayCountdown
-                  v-slot="{ time, past }"
-                  :target="ONE_LIGHT_DAY"
+            <!-- the countdown opens above its button, mirroring #frame-controls below the controls button.
+                 On small screens it'd push the time controls off center, so it moves up under the controls button -->
+            <Teleport
+              to="#right-buttons"
+              :disabled="!smallSize"
+              defer
+            >
+              <div id="countdown-control">
+                <icon-button
+                  v-model="showCountdown"
+                  class="sheet-toggle"
+                  :icon="showCountdown ? 'xmark' : 'alarm-clock'"
+                  :aria-label="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
+                  :color="accentColor"
+                  :focus-color="accentColor"
+                  :tooltip-text="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
+                  tooltip-location="start"
+                  size="1x"
+                />
+                <div
+                  v-if="showCountdown"
+                  id="countdown-panel"
                 >
-                  <template v-if="past">
-                    Voyager 1 reached one light-day from Earth
-                    <span class="light-day-countdown">{{ time }}</span> ago
-                  </template>
-                  <template v-else>
-                    Voyager 1 will reach one light-day from Earth in
-                    <span class="light-day-countdown">{{ time }}</span>
-                  </template>
-                </LightDayCountdown>
+                  <LightDayCountdown
+                    v-slot="{ time, past }"
+                    :target="ONE_LIGHT_DAY"
+                  >
+                    <template v-if="past">
+                      Voyager 1 reached one light-day from Earth
+                      <span class="light-day-countdown">{{ time }}</span> ago
+                    </template>
+                    <template v-else>
+                      Voyager 1 will reach one light-day from Earth in
+                      <span class="light-day-countdown">{{ time }}</span>
+                    </template>
+                  </LightDayCountdown>
+                </div>
               </div>
-            </div>
+            </Teleport>
           </div>
 
           <!-- credit logos $logo-credits.cds-bottom-credits -->
           <credit-logos
-            v-if="!xs"
+            v-if="!xs && !(showTour && !sidePanel)"
             class="cds-bottom-credits"
             :default-logos="['cosmicds', 'wwt', 'nasa']"
             :logo-size="xs ? '1.5em' : '2em'"
@@ -357,7 +355,7 @@
     </v-main>
 
     <!--
-    This contains the informational content that is displayed when the book icon is clicked.
+    This contains the tour and the user guide.
     It's an in-flow flex sibling of #main-content, so opening it shrinks the WWT view
     (from the side normally, from the bottom on small screens) instead of covering it.
   -->
@@ -402,15 +400,10 @@
             :pds-url="step.event.pdsUrl"
             :opus-url="step.event.opusUrl"
             @close="showTour = false"
-            @go-to-view="
-              () => {
-                timePlaying = false;
-                if (step.event.view) goToView(step.event.view);
-              }
-            "
           >
             <p
               v-for="(paragraph, i) in step.text"
+              class="tour-step-text"
               :key="i"
             >
               {{ paragraph }}
@@ -441,19 +434,11 @@
         align-tabs="start"
         @close="showTextSheet = false"
       >
-        <!-- tab-page content is wrapped in a .tab-page class  -->
-        <tab-page title="Information">
-          <!-- everything inside the tab-page is wrapped in a div with class "tab-page" -->
-          <!-- we generally use heading level 3 (the same level as the tabs) -->
-          <h3>Science Information</h3>
-          <p>Sample Science Information</p>
-        </tab-page>
-
         <!-- the user guide is an <TabPage title="User Guide" value="user-guide>...</TabPage>"
          it can be userful to move complex content into a separate component
          -->
         <tab-page
-          title="User Guide"
+          title="App Info"
           value="user-guide"
         >
           <user-guide @change-privacy-settings="showPrivacyPolicyInfo = true" />
@@ -589,7 +574,7 @@ useWWTKeyboardControls(store);
 
 // state in the url (the tour step) //
 import { useUrlState } from "./composables/useUrlState";
-const urlState = useUrlState({ autoUpdate: true, inAddressBar: true, clearOnLoad: false });
+const urlState = useUrlState({ autoUpdate: true, inAddressBar: false, clearOnLoad: true });
 
 // kiosk / fullscreen //
 const kiosk = urlState.get("kiosk")?.toLowerCase() === "true";
@@ -604,6 +589,9 @@ const splash = urlState.get("splash")?.toLowerCase() !== "false";
 const showSplashScreen = ref(splash);
 const showControls = ref(false);
 const showCountdown = ref(false);
+// on small screens both open below the top-right buttons, in the same place: one at a time
+watch(showControls, (open) => open && smallSize.value && (showCountdown.value = false));
+watch(showCountdown, (open) => open && smallSize.value && (showControls.value = false));
 
 const showWebGL2Warning = ref(false);
 
@@ -1146,6 +1134,13 @@ watch(responseOptOut, (newVal) => {
   }
 });
 
+watch(showDataCollectionOptOut, (isOpen, wasOpen) => {
+  // if we close it without answering, set responseOptOut to false (this is an opt out not an opt in)
+  if (wasOpen && !isOpen && responseOptOut.value === null) {
+    responseOptOut.value = false;
+  }
+});
+
 const {
   showRating,
   question,
@@ -1155,7 +1150,7 @@ const {
   initializePrompt,
 } = useUserExperienceRating(STORY_NAME, userID, {
   responseOptOut,
-  timeout: 45_000,
+  timeout: 60_000, // lets not use it for now,
   questions: ["How do you like this app?"],
   mixin: false,
 });
@@ -1197,7 +1192,7 @@ const tour = useTour<TourStepContent>({
   steps: TOUR_EVENTS.map((event) => ({
     id: event.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
     title: event.title,
-    text: [event.caption],
+    text: Array.isArray(event.caption) ? event.caption : [event.caption],
     event,
     setup: async () => {
       store.waitForReady().then(() => {
@@ -1225,7 +1220,7 @@ const tour = useTour<TourStepContent>({
     },
   })),
 });
-urlState.track("tour", tour.stepID);
+// urlState.track("tour", tour.stepID);
 
 watch(tour.stepIndex, (index: number) => {
   maxTourStep = Math.max(maxTourStep, index);
@@ -1472,7 +1467,7 @@ mutuallyExclusive(showTour, showTextSheet, showUserGuideSheet);
 // itself. Its class lands on the tooltip too, hence `button.`.
 const drawerOpenerClass = computed(() => {
   if (showTour.value) return "tour-button";
-  if (showTextSheet.value) return infoSheetTab.value === "user-guide" ? "user-guide-button" : "learn-more-button";
+  if (showTextSheet.value) return "user-guide-button"; // the text sheet's only tab
   return null;
 });
 watch(drawerOpenerClass, (now, before) => {
@@ -1487,6 +1482,8 @@ function closeSplashScreen() {
   // has the user responsed the opt out, then show the privacy dialog
   // pass `true` to only show it once per session, even if the user does not respond (for example if it shows up after an intro sequence)
   conditionalShowPrivacyDialog();
+  tour.goToStep(0, true);
+  showTour.value = true;
 }
 </script>
 
@@ -1687,6 +1684,12 @@ body {
 #countdown-panel {
   bottom: calc(100% + 10px);
   text-align: center;
+}
+
+// small screens: the button's at the top right (teleported), so the panel opens below it, like #frame-controls
+.app-is-small #countdown-panel {
+  bottom: auto;
+  top: calc(100% + 10px);
 }
 
 #frame-controls {
@@ -1971,6 +1974,10 @@ body {
   display: none;
 }
 
+.tour-sheet .tour-text-controls .tour-dots button.tour-dot-active {
+  color: hsl(233deg 90% 72%);
+}
+
 /* Even touching, the dots don't fit between Back and Next in a narrow box (the
    left drawer on a landscape phone is ~230px), so there they get a row of
    their own above the buttons. The 300px is sized for ~13 steps: 13 dots at
@@ -2078,5 +2085,13 @@ body {
   .privacy-footer-buttons {
     flex-wrap: nowrap;
   }
+}
+
+.app-is-small .tour-sheet.info-box {
+  margin: 0;
+}
+
+.tour-step-text {
+  margin-bottom: 0.5rem;
 }
 </style>

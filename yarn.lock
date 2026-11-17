@@ -158,7 +158,7 @@ __metadata:
     "@floating-ui/dom": "*"
     shepherd.js: "*"
     vue-shepherd: "*"
-  checksum: 10c0/35013d8fcd1e4b22e14ebcd4588bbbd9a1172e5bb011933cc964bf50bf449f93e74a522d11d1df490dda851d812dcb78e7c326544a38e05668089a82f96d1664
+  checksum: 10c0/301fcbac98f6f82a5a8de3e9443866ed0ae840b570f5e5d12c51a9f377710ce52aff01bad7c553a50acab453947b7969f8457d75d831d32e0d25c79cc658fa9d
   languageName: node
   linkType: hard
 

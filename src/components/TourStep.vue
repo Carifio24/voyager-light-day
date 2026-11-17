@@ -17,21 +17,13 @@
         class="event-date"
       >
         {{ subtitle }}
-        <v-btn
-          icon="mdi-arrow-right-circle"
-          variant="text"
-          density="compact"
-          size="small"
-          aria-label="Go to this step's view"
-          @click="emit('go-to-view')"
-        />
       </p>
       <figure v-if="image">
         <img
           :src="image"
           :alt="title"
         />
-        <figcaption class="event-credit">
+        <figcaption class="event-credit mb-2">
           <a
             v-if="imageUrl"
             :href="imageUrl"
@@ -77,7 +69,6 @@ defineProps<{
 
 const emit = defineEmits<{
   close: [];
-  "go-to-view": [];
 }>();
 </script>
 
