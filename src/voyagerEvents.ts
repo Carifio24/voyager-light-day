@@ -378,7 +378,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     caption: `This image shows an updated version of the iconic Pale Blue Dot
       image taken by the Voyager 1 spacecraft, at the suggestion of Carl Sagan. Planet Earth is visible as a
       bright speck within the sunbeam just right of center and appears softly
-      blue, as in the original version published in 1990`,
+      blue, as in the original version published in 1990.`,
     date: new Date("1990-02-14T04:48:00Z"),
     image: paleBlueDot,
     imageUrl: "https://science.nasa.gov/photojournal/pale-blue-dot-revisited/",
