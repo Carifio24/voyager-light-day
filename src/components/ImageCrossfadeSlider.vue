@@ -1,10 +1,10 @@
 <template>
   <div class="crossfade-slider">
     <!-- without the key, you get a warning about them having the same key -->
-    <slot 
+    <slot
       key="left"
-      name="label" 
-      :label="leftLabel" 
+      name="label"
+      :label="leftLabel"
       :active="crossfade === 0"
       :layer="left"
       :on="{ onClick: selectLeft }"
@@ -24,10 +24,10 @@
       :step="0.01"
       hide-details
     ></v-slider>
-    <slot 
+    <slot
       key="right"
-      name="label" 
-      :label="rightLabel" 
+      name="label"
+      :label="rightLabel"
       :active="crossfade === 1"
       :layer="right"
       :on="{ onClick: selectRight }"
@@ -54,21 +54,30 @@ const props = defineProps<{
 }>();
 
 /* v-model for the crossfade value between 0 and 1, default 0. */
-const crossfade = defineModel<number>({default: 0});
+const crossfade = defineModel<number>({ default: 0 });
 
-watch(crossfade, (v) => {
-  props.left.set_opacity(1 - v);
-  props.right.set_opacity(v);
-}, { immediate: true });
+watch(
+  crossfade,
+  (v) => {
+    props.left.set_opacity(1 - v);
+    props.right.set_opacity(v);
+  },
+  { immediate: true },
+);
 
-const selectLeft = () => crossfade.value = 0;
-const selectRight = () => crossfade.value = 1;
+const selectLeft = () => (crossfade.value = 0);
+const selectRight = () => (crossfade.value = 1);
 
 defineSlots<{
   /** What to use for the labels. Same component for both left and right label */
-  label: (props: { label: string, active: boolean, key: "left" | "right", layer: ImageSetLayer, on: { onClick: () => void } }) => void;
+  label: (props: {
+    label: string;
+    active: boolean;
+    key: "left" | "right";
+    layer: ImageSetLayer;
+    on: { onClick: () => void };
+  }) => void;
 }>();
-
 </script>
 
 <style lang="less">
@@ -79,7 +88,6 @@ defineSlots<{
   pointer-events: auto;
   width: 50%;
   max-width: 400px;
-
 
   .crossfade-label {
     user-select: none;

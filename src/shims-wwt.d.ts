@@ -60,7 +60,7 @@ declare module "@wwtelescope/engine" {
     clone(): Matrix3d;
     invert(): void;
   }
-  
+
   namespace Matrix3d {
     function multiplyMatrix(a: Matrix3d, b: Matrix3d): Matrix3d;
     function invertMatrix(m: Matrix3d): Matrix3d;
@@ -69,7 +69,7 @@ declare module "@wwtelescope/engine" {
     function invert(): void;
     function floatArray(): number[];
   }
-  
+
   interface Vector3d {
     normalize(): void;
   }
@@ -161,7 +161,7 @@ declare module "@wwtelescope/engine" {
   interface Object3d {
     _mesh: { boundingSphere: { radius: number } } | null;
   }
-  
+
   interface Object3dLayer {
     set_roll(value: number): void;
     set_pitch(value: number): void;
@@ -188,7 +188,14 @@ declare module "@wwtelescope/engine" {
   // exported but untyped in 7.41: the mover gotoTarget switches planets with (view_mover.js)
   export class ViewMoverKenBurnsStyle {
     /** `time` in seconds; the clock goes from `fromDateTime` to `toDateTime`. type 3 eases in and out */
-    constructor(from: CameraParameters, to: CameraParameters, time: number, fromDateTime: Date, toDateTime: Date, type: number);
+    constructor(
+      from: CameraParameters,
+      to: CameraParameters,
+      time: number,
+      fromDateTime: Date,
+      toDateTime: Date,
+      type: number,
+    );
     get_complete(): boolean;
     get_currentDateTime(): Date;
   }

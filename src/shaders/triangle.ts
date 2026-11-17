@@ -2,7 +2,13 @@
 // @ts-nocheck
 
 import { CameraParameters, Color, Matrix3d, RenderContext } from "@wwtelescope/engine";
-import { createVertexShader, createFragmentShader, createProgram, displayShaderCompileError, displayProgramLinkError } from "./webgl_utils";
+import {
+  createVertexShader,
+  createFragmentShader,
+  createProgram,
+  displayShaderCompileError,
+  displayProgramLinkError,
+} from "./webgl_utils";
 import { WEBGL } from "./webgl_constants";
 
 export class TriangleShader {
@@ -27,7 +33,6 @@ export class TriangleShader {
   static lineColorLoc = 0;
 
   static init(renderContext: RenderContext) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error `gl` exists on `RenderContext`
     const gl: WebGLRenderingContextBase = renderContext.gl;
 
@@ -160,7 +165,7 @@ export class TriangleShader {
     TriangleShader.initialized = true;
   }
 
-    static use(
+  static use(
     renderContext: RenderContext,
     vertex: WebGLBuffer,
     lineColor: Color,
@@ -174,7 +179,6 @@ export class TriangleShader {
     sky: booleam,
     mask: WebGLBuffer,
   ) {
-
     const gl = renderContext.gl as WebGLRenderingContextBase;
     if (!TriangleShader.initialized) {
       TriangleShader.init(renderContext);
@@ -191,7 +195,13 @@ export class TriangleShader {
     gl.uniform1f(TriangleShader.showFarSideLoc, showFarSide ? 1 : 0);
     gl.uniform1f(TriangleShader.skyLoc, sky ? -1 : 1);
     gl.uniform3f(TriangleShader.cameraPosLoc, camera.x, camera.y, camera.z);
-    gl.uniform4f(TriangleShader.lineColorLoc, lineColor.r / 255, lineColor.g / 255, lineColor.b / 255, lineColor.a / 255);
+    gl.uniform4f(
+      TriangleShader.lineColorLoc,
+      lineColor.r / 255,
+      lineColor.g / 255,
+      lineColor.b / 255,
+      lineColor.a / 255,
+    );
 
     if (zBuffer) {
       gl.enable(WEBGL.DEPTH_TEST);

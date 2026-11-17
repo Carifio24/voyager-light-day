@@ -62,24 +62,30 @@ createApp(Voyager, {
   .component("font-awesome-icon", FontAwesomeIcon)
 
   // Directives
-  .directive( "hide", hide)
+  .directive("hide", hide)
   .directive("focus-toggle", focusToggle)
   .directive("focus-grab", focusGrab)
   .directive("click-outside", ClickOutside)
 
-  .component('wwt-tracked-content', WWTTrackedContent)
+  .component("wwt-tracked-content", WWTTrackedContent)
 
   // Mount
   .mount("#app-mount");
 
-
-
-
 // https://david-gilbertson.medium.com/removing-that-ugly-focus-ring-and-keeping-it-too-6c8727fefcd2
 // apparently quite the old problem.
-window.addEventListener('keydown', e => { // text inputs always match :focus-visible, so track tab navigation ourselves
-  if (e.key === 'Tab') document.documentElement.dataset.focusSource = 'keyboard';
-}, true);
-window.addEventListener('pointerdown', () => {
-  document.documentElement.dataset.focusSource = 'pointer';
-}, true);
+window.addEventListener(
+  "keydown",
+  (e) => {
+    // text inputs always match :focus-visible, so track tab navigation ourselves
+    if (e.key === "Tab") document.documentElement.dataset.focusSource = "keyboard";
+  },
+  true,
+);
+window.addEventListener(
+  "pointerdown",
+  () => {
+    document.documentElement.dataset.focusSource = "pointer";
+  },
+  true,
+);

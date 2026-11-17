@@ -63,7 +63,7 @@ export function horizonsReferenceFrame(body: SolarSystemObjects): string {
 }
 
 /** one screen-sized dot at its frame's origin */
-function setupMarkerLayer(layer: SpreadSheetLayer, colorHex: string, useTriangle=false) {
+function setupMarkerLayer(layer: SpreadSheetLayer, colorHex: string, useTriangle = false) {
   layer.set_xAxisColumn(0);
   layer.set_yAxisColumn(1);
   layer.set_zAxisColumn(2);
@@ -80,7 +80,10 @@ function setupMarkerLayer(layer: SpreadSheetLayer, colorHex: string, useTriangle
   if (useTriangle) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore Triangle hacking
-    layer.prepVertexBuffer(WWTControl.singleton.renderContext, layer.get_opacity()); layer.pointList.draw = drawPointList.bind(layer.pointList);
+    layer.prepVertexBuffer(WWTControl.singleton.renderContext, layer.get_opacity());
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore Triangle hacking
+    layer.pointList.draw = drawPointList.bind(layer.pointList);
   }
   return layer;
 }
@@ -97,7 +100,7 @@ export function createMovingMarkerLayer(
   frame: SolarSystemObjects,
   colorHex: string,
   positionAt: (t: number) => HorizonsVector | null,
-  useTriangle=false,
+  useTriangle = false,
 ): Promise<SpreadSheetLayer> {
   let shown = positionAt(SpaceTimeController.get_now().getTime()) !== null;
   let layer: SpreadSheetLayer | null = null;

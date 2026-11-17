@@ -1,5 +1,3 @@
-
-
 /** add a function or something to the window */
 export function addToWindow(name: string, value: unknown) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,7 +27,7 @@ export function _short(el: HTMLElement | Element | null | undefined) {
 let oldFocus: Element | null = null;
 /** log what the focus is for accessibility debugging
  * this should get either called in main, or added to the window so it
- * can be called from the console. 
+ * can be called from the console.
  */
 export function _logFocus() {
   const el = document.activeElement;

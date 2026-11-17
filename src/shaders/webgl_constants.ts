@@ -1,5 +1,4 @@
 // Magic constants defined by WebGL.
-/* eslint-disable */
 
 export namespace WEBGL {
   export const ACTIVE_ATTRIBUTE_MAX_LENGTH = 35722;
@@ -311,4 +310,4 @@ export namespace WEBGL {
   export const VERTEX_SHADER = 35633;
   export const VIEWPORT = 2978;
   export const ZERO = 0;
-};
+}

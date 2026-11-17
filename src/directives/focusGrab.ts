@@ -9,26 +9,25 @@
  *
  */
 
-import type { Directive } from 'vue';
-
+import type { Directive } from "vue";
 
 export type FocusGrabDirective = Directive<HTMLElement, boolean>;
 
-declare module 'vue' {
-    export interface GlobalDirectives {
-        /**
-         * :v-focus-grab=\<boolean\>
-         *
-         * Focuses the element when the bound value becomes true. Unlike
-         * v-focus-toggle, it never returns focus anywhere when the value
-         * becomes false - it only ever grabs.
-         *
-         * make sure element is focusable. if wrapper is a not a focusable
-         * element ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus))
-         * add `tabindex="-1"` after the v-focus*
-        */
-        vFocusGrab: FocusGrabDirective
-    }
+declare module "vue" {
+  export interface GlobalDirectives {
+    /**
+     * :v-focus-grab=\<boolean\>
+     *
+     * Focuses the element when the bound value becomes true. Unlike
+     * v-focus-toggle, it never returns focus anywhere when the value
+     * becomes false - it only ever grabs.
+     *
+     * make sure element is focusable. if wrapper is a not a focusable
+     * element ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus))
+     * add `tabindex="-1"` after the v-focus*
+     */
+    vFocusGrab: FocusGrabDirective;
+  }
 }
 
 // import { _short } from '../utils';
@@ -48,7 +47,7 @@ function activate(el: HTMLElement) {
  * make sure element is focusable. if wrapper is a not a focusable element
  * ([MDN](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus))
  * add `tabindex="-1"` after the v-focus*
-*/
+ */
 export default {
   // the element may be v-if'd in already active (e.g. default true)
   mounted: (el, binding) => {

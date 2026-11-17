@@ -66,7 +66,11 @@ function correctionVector(jdtdb: number, center: SolarSystemObjects, frame: Sola
 }
 
 /** where WWT puts `frame` relative to `center` at TDB jdtdb, J2000 ecliptic (X, Y, Z) */
-export function bodyCenterPositionJ2000(jdtdb: number, center: SolarSystemObjects, frame: SolarSystemObjects): ThreeNumber {
+export function bodyCenterPositionJ2000(
+  jdtdb: number,
+  center: SolarSystemObjects,
+  frame: SolarSystemObjects,
+): ThreeNumber {
   const correction = correctionVector(jdtdb, center, frame);
   // Ecliptic coordinates are: X=vernal equinox, X-Y plane=ecliptic plane, Z=ecliptic north pole.
   // WWT's 3d ecliptic: x=vernal equinox, y=ecliptic north pole, x-z plane =ecliptic plane.
@@ -75,7 +79,11 @@ export function bodyCenterPositionJ2000(jdtdb: number, center: SolarSystemObject
 }
 
 /** its J2000 velocity (au/day), from positions 10 minutes either side */
-export function bodyCenterVelocityJ2000(jdtdb: number, center: SolarSystemObjects, frame: SolarSystemObjects): ThreeNumber {
+export function bodyCenterVelocityJ2000(
+  jdtdb: number,
+  center: SolarSystemObjects,
+  frame: SolarSystemObjects,
+): ThreeNumber {
   const dt = 10 / 24 / 60; // day
   const after = bodyCenterPositionJ2000(jdtdb + dt, center, frame);
   const before = bodyCenterPositionJ2000(jdtdb - dt, center, frame);

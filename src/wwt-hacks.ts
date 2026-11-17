@@ -16,7 +16,7 @@ import { Color, Matrix3d, RenderContext, Vector3d } from "@wwtelescope/engine";
 import { WEBGL } from "./shaders/webgl_constants";
 import { TriangleShader } from "./shaders/triangle";
 
-export function drawPointList(renderContext: RenderContext, opacity: number, cull: boolean, depthMask=true) {
+export function drawPointList(renderContext: RenderContext, opacity: number, cull: boolean, depthMask = true) {
   this._initBuffer(renderContext);
   const gl = renderContext.gl as WebGLRenderingContextBase;
   const zero = new Vector3d();
@@ -33,7 +33,7 @@ export function drawPointList(renderContext: RenderContext, opacity: number, cul
       this.jNow,
       0,
       cam,
-      this.scale * renderContext.height / 960,
+      (this.scale * renderContext.height) / 960,
       this.minSize,
       this.showFarSide,
       this.sky,

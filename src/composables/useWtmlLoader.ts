@@ -2,47 +2,51 @@ import { ref, shallowReactive, type Ref } from "vue";
 import { engineStore } from "@wwtelescope/engine-pinia";
 import { Folder, Place, Imageset, ImageSetLayer, FitsImage, WWTControl } from "@wwtelescope/engine";
 
-
-
 interface WtmlLoaderOptions {
   /** do something with the folder when it loads. prefer to use onLoad */
   onNewFolder?: (folder: Folder) => void;
-  
+
   /** do something with a place when it loads.prefer to use onLoad */
   onNewPlace?: (place: Place, index: number) => void;
-  
+
   /** do something with an imageset when it loads (often where we might move to an imageset). prefer to use onLoad */
-  onNewImageset?: (imageset: Imageset, index: number) => void; 
-  
+  onNewImageset?: (imageset: Imageset, index: number) => void;
+
   /** do something with a layer when it loads. often we will set_opacity or set_enabled here. prefer to use onLoad */
-  onNewLayer?: ((layer: ImageSetLayer, index: number) => void); 
-  
+  onNewLayer?: (layer: ImageSetLayer, index: number) => void;
+
   /** onLoad - for every layer, out contains the full context, and we can operate on the layer/imageset and place.  */
-  onLoad?:(out: {folder: Folder, place: Place, imageset: Imageset, layer: ImageSetLayer, fitsImage?: FitsImage | null }, index: number) => void;
+  onLoad?: (
+    out: { folder: Folder; place: Place; imageset: Imageset; layer: ImageSetLayer; fitsImage?: FitsImage | null },
+    index: number,
+  ) => void;
 
   /** fires for every place's *background* imageset as it loads, with its place, imageset, layer, and fitsImage (if exists) */
-  onBackgroundLoad?: (out: { place: Place, imageset: Imageset, layer: ImageSetLayer, fitsImage: FitsImage | null }, index: number) => void;
+  onBackgroundLoad?: (
+    out: { place: Place; imageset: Imageset; layer: ImageSetLayer; fitsImage: FitsImage | null },
+    index: number,
+  ) => void;
 
   /** goTo by a certain criteria, often a boolean if a WTML has a single value. Otherwise use a function to pick a certain one by index of iset.get_name */
   goTo?: ((iset: Imageset) => boolean) | ((iset: Imageset, index: number) => boolean) | boolean;
-  
+
   /** use instant goto. you probably want this to be true if loading at startup */
-  instant?: boolean; 
-  
+  instant?: boolean;
+
   /** print debug messages to the console */
-  verbose?: boolean; 
-  
+  verbose?: boolean;
+
   /** useful if there is a stack of imagesets and you want them to load smoothly. don't do too many though. default: false */
   prefetch?: boolean;
 
   /** force fits mode for the whole file
    * @deprecated fits mode is now auto-detected from the imageset's declared file type via .get_extension.
-  */
+   */
   useFits?: boolean;
 
   /** usually true. but set to false if you want to control the load order of multiple WTML files, which impacts which layer is on top. no guarantees otherwise */
   autoload?: boolean; // whether to start loading immediately, defaults to true
-  
+
   /** makes the code self-documenting so we know if the singular names are just the first or truly the only item  */
   single?: boolean;
 }
@@ -57,7 +61,7 @@ interface WtmlLoaderReturn {
   load: () => void;
   /** is this a sinlge item WTML. Set by the user, and not inferred from the WTML */
   single: boolean;
-  
+
   /** Places in the WMTL file */
   places: Place[];
   /** Each place's foreground/study imageset, in the same order as places */
@@ -105,11 +109,9 @@ function isTemplateURL(url: string): boolean {
   return url.match(/{[0-9]*}/) != null;
 }
 
-
 function looksLikeFits(imageset: Imageset): boolean {
   return /(fits|fit|fts|ftz)$/i.test(imageset.get_extension());
 }
-
 
 /**
  * Loads a WTML collection and adds an ImageSetLayer for each place's imageset(s).
@@ -117,7 +119,7 @@ function looksLikeFits(imageset: Imageset): boolean {
  * Each place's foreground/study imageset is loaded and tracked separately from its
  * background imageset, if it has one - see {@link WtmlLoaderReturn}. FITS mode is
  * auto-detected per imageset from its declared file type.
- * 
+ *
  * Does not support loading child folders
  *
  * @param wtmlUrl - URL of the WTML file to load
@@ -142,18 +144,13 @@ function looksLikeFits(imageset: Imageset): boolean {
  * crossfade.backgroundImagesetLayer; // e.g. JWST
  * ```
  */
-export function useWtml(
-  wtmlUrl: string,
-  _options?: WtmlLoaderOptions
-): Prettify<WtmlLoaderReturn> {
-
+export function useWtml(wtmlUrl: string, _options?: WtmlLoaderOptions): Prettify<WtmlLoaderReturn> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function debugLog(...messages: any[]) {
     if (options?.verbose) {
       console.log(...messages);
     }
   }
-
 
   // const ready = ref(false);
   let promiseResolve: () => void;
@@ -173,7 +170,7 @@ export function useWtml(
   const fitsImages: (FitsImage | null)[] = shallowReactive([]);
   const backgroundImagesets: Imageset[] = shallowReactive([]);
   const backgroundImagesetLayers: ImageSetLayer[] = shallowReactive([]);
-  
+
   // places/imagesetLayers/backgroundImagesetLayers are all built in the same order, by
   // each place's own index - so that index is all we need to cross-reference them
   function getImagesetLayersForPlace(place: Place): ImageSetLayer[] {
@@ -190,22 +187,22 @@ export function useWtml(
 
   function getPlaceForImageset(imageset: Imageset): Place | undefined {
     const id = imageset.get_imageSetID();
-    let index = imagesetLayers.findIndex(l => l.get_imageSet().get_imageSetID() === id);
-    if (index === -1) index = backgroundImagesetLayers.findIndex(l => l.get_imageSet().get_imageSetID() === id);
+    let index = imagesetLayers.findIndex((l) => l.get_imageSet().get_imageSetID() === id);
+    if (index === -1) index = backgroundImagesetLayers.findIndex((l) => l.get_imageSet().get_imageSetID() === id);
     return index === -1 ? undefined : places[index];
   }
 
-  const placeNames = () => places.map(p => p.get_name());
-  const imagesetNames = () => imagesets.map(i => i.get_name());
+  const placeNames = () => places.map((p) => p.get_name());
+  const imagesetNames = () => imagesets.map((i) => i.get_name());
 
   const fetchingComplete = ref(false);
 
   const store = engineStore();
 
   /**the type may be Thumbnails, but it may contain Folder's or FolderUps - this is why we filter */
-  function thumbnails2Places(thumbnails: (ReturnType<Folder["get_children"]>)): Place[] {
+  function thumbnails2Places(thumbnails: ReturnType<Folder["get_children"]>): Place[] {
     if (thumbnails == null) return [];
-    return thumbnails.filter(child => child instanceof Place) as Place[];
+    return thumbnails.filter((child) => child instanceof Place) as Place[];
   }
 
   function getOrdered<T>(array: [number, T][]): T[] {
@@ -223,7 +220,6 @@ export function useWtml(
 
     return options.goTo(iset, index); // js doesn't care if there are too many argument, and TS is happy :)
   }
-
 
   function load() {
     store.waitForReady().then(async () => {
@@ -252,7 +248,9 @@ export function useWtml(
       places.push(...thumbnails2Places(children));
 
       if (places.length === 0) {
-        console.warn(`Folder had ${children.length} children, but no places found in the provided WTML file at ${wtmlUrl}`);
+        console.warn(
+          `Folder had ${children.length} children, but no places found in the provided WTML file at ${wtmlUrl}`,
+        );
         return;
       }
 
@@ -275,28 +273,37 @@ export function useWtml(
         if (imageset == null && backgroundImageset == null) {
           console.warn(`No imageset found for place with name ${child.get_name()} at index ${placeIndex}`);
           return;
-        };
+        }
 
         if (options?.onNewPlace) options.onNewPlace(child, placeIndex);
 
-
-        const backgroundPromise = backgroundImageset == null ? Promise.resolve() : store.addImageSetLayer({
-          url: backgroundImageset.get_url(),
-          mode: (options?.useFits || looksLikeFits(backgroundImageset)) ? "fits" : "autodetect",
-          name: backgroundImageset.get_name(),
-          goto: false,
-        }).then(layer => {
-          const _layer = store.imagesetLayerById(layer.id.toString());
-          const _iset = _layer?.get_imageSet() ?? null;
-          if (_iset && _layer) {
-            _backgroundIsets.push([placeIndex, _iset]);
-            _backgroundLayers.push([placeIndex, _layer]);
-            const _fit = _layer.getFitsImage() ?? null;
-            if (options?.onBackgroundLoad) options.onBackgroundLoad({ place: child, imageset: _iset, layer: _layer, fitsImage: _fit }, placeIndex);
-          }
-        }).catch(error => {
-          console.error("Failed to load background imageset from", error, backgroundImageset);
-        });
+        const backgroundPromise =
+          backgroundImageset == null
+            ? Promise.resolve()
+            : store
+              .addImageSetLayer({
+                url: backgroundImageset.get_url(),
+                mode: options?.useFits || looksLikeFits(backgroundImageset) ? "fits" : "autodetect",
+                name: backgroundImageset.get_name(),
+                goto: false,
+              })
+              .then((layer) => {
+                const _layer = store.imagesetLayerById(layer.id.toString());
+                const _iset = _layer?.get_imageSet() ?? null;
+                if (_iset && _layer) {
+                  _backgroundIsets.push([placeIndex, _iset]);
+                  _backgroundLayers.push([placeIndex, _layer]);
+                  const _fit = _layer.getFitsImage() ?? null;
+                  if (options?.onBackgroundLoad)
+                    options.onBackgroundLoad(
+                      { place: child, imageset: _iset, layer: _layer, fitsImage: _fit },
+                      placeIndex,
+                    );
+                }
+              })
+              .catch((error) => {
+                console.error("Failed to load background imageset from", error, backgroundImageset);
+              });
 
         if (imageset == null) {
           await backgroundPromise;
@@ -308,75 +315,75 @@ export function useWtml(
           toFetch.push(url);
         }
 
-        const foregroundPromise = store.addImageSetLayer({
-          url,
-          mode: (options?.useFits || looksLikeFits(imageset)) ? "fits" : "autodetect",
-          name: imageset.get_name(),
-          goto: resolveGoTo(imageset, placeIndex) && !options?.instant,
-        }).then(async layer => {
-          debugLog(`Successfully loaded layer for place with name ${child.get_name()} at index ${placeIndex}`);
-          // get the ImageSetLayer, Imageset and FitImage from the actual store
-          const _iset = store.imagesetForLayer(layer.id.toString());
-          const _layer = store.imagesetLayerById(layer.id.toString());
-          const _fit = _layer?.getFitsImage() ?? null;
+        const foregroundPromise = store
+          .addImageSetLayer({
+            url,
+            mode: options?.useFits || looksLikeFits(imageset) ? "fits" : "autodetect",
+            name: imageset.get_name(),
+            goto: resolveGoTo(imageset, placeIndex) && !options?.instant,
+          })
+          .then(async (layer) => {
+            debugLog(`Successfully loaded layer for place with name ${child.get_name()} at index ${placeIndex}`);
+            // get the ImageSetLayer, Imageset and FitImage from the actual store
+            const _iset = store.imagesetForLayer(layer.id.toString());
+            const _layer = store.imagesetLayerById(layer.id.toString());
+            const _fit = _layer?.getFitsImage() ?? null;
 
-          if (_iset && _layer) {
-            _isets.push([placeIndex,_iset]);
-            _layers.push([placeIndex,_layer]);
-            _fits.push([placeIndex, _fit]);
-            const out = {
-              folder: loadedFolder,
-              place: child,
-              imageset: _iset,
-              layer: _layer,
-              fitsImage: _fit
-            };
+            if (_iset && _layer) {
+              _isets.push([placeIndex, _iset]);
+              _layers.push([placeIndex, _layer]);
+              _fits.push([placeIndex, _fit]);
+              const out = {
+                folder: loadedFolder,
+                place: child,
+                imageset: _iset,
+                layer: _layer,
+                fitsImage: _fit,
+              };
 
-            if (options?.onNewImageset) options.onNewImageset(_iset, placeIndex);
-            if (options?.onNewLayer) options.onNewLayer(layer, placeIndex);
-            if (options?.onLoad) options.onLoad(out, placeIndex);
+              if (options?.onNewImageset) options.onNewImageset(_iset, placeIndex);
+              if (options?.onNewLayer) options.onNewLayer(layer, placeIndex);
+              if (options?.onLoad) options.onLoad(out, placeIndex);
 
-            if (resolveGoTo(_iset, placeIndex) && options?.instant) {
-              const ctl = WWTControl.singleton;
-              // const rc = ctl.renderContext;
-              const ra = child.get_RA() * 15;
-              const dec = child.get_dec();
-              const roll = _iset.get_rotation();
-              const zoomDeg = _iset._guessZoomSetting(WWTControl.singleton.renderContext.viewCamera.zoom);
-              store.gotoRADecZoom({
-                raRad: ra * Math.PI / 180,
-                decRad: dec * Math.PI / 180,
-                zoomDeg,
-                instant: true,
-                rollRad: roll * Math.PI / 180,
-              });
+              if (resolveGoTo(_iset, placeIndex) && options?.instant) {
+                const ctl = WWTControl.singleton;
+                // const rc = ctl.renderContext;
+                const ra = child.get_RA() * 15;
+                const dec = child.get_dec();
+                const roll = _iset.get_rotation();
+                const zoomDeg = _iset._guessZoomSetting(WWTControl.singleton.renderContext.viewCamera.zoom);
+                store.gotoRADecZoom({
+                  raRad: (ra * Math.PI) / 180,
+                  decRad: (dec * Math.PI) / 180,
+                  zoomDeg,
+                  instant: true,
+                  rollRad: (roll * Math.PI) / 180,
+                });
 
-              await new Promise(requestAnimationFrame);
-              ctl.renderOneFrame();
-
+                await new Promise(requestAnimationFrame);
+                ctl.renderOneFrame();
+              }
             }
-          }
 
-          /* we should never see these two error messages */
-          if (!_iset) {
-            console.error(`Imageset not found for imageSetID: ${layer.id.toString()}`, _iset);
-          }
+            /* we should never see these two error messages */
+            if (!_iset) {
+              console.error(`Imageset not found for imageSetID: ${layer.id.toString()}`, _iset);
+            }
 
-          if (!_layer) {
-            console.error(`layer not found for id: ${layer.id.toString()}`, _layer);
-          }
-
-
-        }).catch(error => {
-          console.error("Failed to load imageset from", error, imageset);
-        });
+            if (!_layer) {
+              console.error(`layer not found for id: ${layer.id.toString()}`, _layer);
+            }
+          })
+          .catch((error) => {
+            console.error("Failed to load imageset from", error, imageset);
+          });
 
         await Promise.all([foregroundPromise, backgroundPromise]);
       });
 
       const interval = 20;
       function timeoutFetch<T>(callable: () => PromiseLike<T>, timeout: number): Promise<void> {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
           setTimeout(async () => {
             await callable();
             resolve();
@@ -384,7 +391,7 @@ export function useWtml(
         });
       }
       const fetchPromises = toFetch.map((url, index) => timeoutFetch(() => fetch(url), index * interval));
-      Promise.all(fetchPromises).then(() => fetchingComplete.value = true);
+      Promise.all(fetchPromises).then(() => (fetchingComplete.value = true));
 
       await Promise.all(layerPromises);
 
@@ -411,7 +418,6 @@ export function useWtml(
     load();
   }
 
-
   return {
     ready,
     loaded,
@@ -430,17 +436,31 @@ export function useWtml(
     getPlaceForImageset,
 
     // convenience accessors for the common case of a WTML file with just one place
-    get place() { return places[0]; },
-    get imageset() { return imagesets[0]; },
-    get imagesetLayer() { return imagesetLayers[0]; },
-    get fitsImage() { return fitsImages[0] ?? null; },
+    get place() {
+      return places[0];
+    },
+    get imageset() {
+      return imagesets[0];
+    },
+    get imagesetLayer() {
+      return imagesetLayers[0];
+    },
+    get fitsImage() {
+      return fitsImages[0] ?? null;
+    },
     placeName: () => placeNames()[0],
     imagesetName: () => imagesetNames()[0],
 
     backgroundImagesets,
     backgroundImagesetLayers,
-    get hasBackground() { return backgroundImagesetLayers.length > 0; },
-    get backgroundImageset() { return backgroundImagesets[0]; },
-    get backgroundImagesetLayer() { return backgroundImagesetLayers[0]; },
+    get hasBackground() {
+      return backgroundImagesetLayers.length > 0;
+    },
+    get backgroundImageset() {
+      return backgroundImagesets[0];
+    },
+    get backgroundImagesetLayer() {
+      return backgroundImagesetLayers[0];
+    },
   };
 }

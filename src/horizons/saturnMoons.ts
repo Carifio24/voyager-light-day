@@ -33,11 +33,25 @@ interface MoonDefinition {
 }
 
 const SATURN_MOONS: MoonDefinition[] = [
-  { name: "Titan", table: new HorizonsVectorTable(titanData), periodDays: 15.945448, color: TITAN_COLOR, parent: SATURN, nearParentAu: 1 },
+  {
+    name: "Titan",
+    table: new HorizonsVectorTable(titanData),
+    periodDays: 15.945448,
+    color: TITAN_COLOR,
+    parent: SATURN,
+    nearParentAu: 1,
+  },
 ];
 
 const URANUS_MOONS: MoonDefinition[] = [
-  { name: "Miranda", table: new HorizonsVectorTable(mirandaData), periodDays: 1.413479, color: MIRANDA_COLOR, parent: SolarSystemObjects.uranus, nearParentAu: 0.1 },
+  {
+    name: "Miranda",
+    table: new HorizonsVectorTable(mirandaData),
+    periodDays: 1.413479,
+    color: MIRANDA_COLOR,
+    parent: SolarSystemObjects.uranus,
+    nearParentAu: 0.1,
+  },
 ];
 console.log(URANUS_MOONS[0].table);
 
@@ -92,9 +106,9 @@ export function createMoonLayers(store: EngineStore): Promise<SpreadSheetLayer[]
     [...SATURN_MOONS, ...URANUS_MOONS].map((moon) => {
       const positionAt = moonPositionAt(moon.table, moon.periodDays, moon.parent);
       // null hides the marker
-      return createMovingMarkerLayer(store, moon.name, moon.parent, moon.color, (t) => (nearParent(moon) ? positionAt(t) : null));
+      return createMovingMarkerLayer(store, moon.name, moon.parent, moon.color, (t) =>
+        nearParent(moon) ? positionAt(t) : null,
+      );
     }),
   );
 }
-
-
