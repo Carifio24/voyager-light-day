@@ -53,6 +53,7 @@
           :offset-y="-5"
         >
           <p
+            v-show="showVoyagerLabels"
             class="voyager-label"
             :style="`color: ${VOYAGER_1_COLOR}`"
           >
@@ -67,6 +68,7 @@
           :offset-y="-5"
         >
           <p
+            v-show="showVoyagerLabels"
             class="voyager-label"
             :style="`color: ${VOYAGER_2_COLOR}`"
           >
@@ -240,8 +242,14 @@
                     density="compact"
                     hide-details
                   />
+                  <v-checkbox
+                    v-model="showVoyagerLabels"
+                    label="Show Voyager labels"
+                    density="compact"
+                    hide-details
+                  />
                 </div>
-                <div class="playback-rate-input">
+                <!-- <div class="playback-rate-input">
                   <v-text-field
                     v-model.number="playbackRate"
                     label="Playback rate (seconds per second)"
@@ -249,7 +257,7 @@
                     density="compact"
                     hide-details
                   />
-                </div>
+                </div> -->
               </div>
             </div>
           </div>
@@ -773,6 +781,7 @@ const MIN_MODEL_SCALE = 3; // log10 of the model's magnification (0 is actual si
 const METERS_PER_AU = 149597870700;
 const MODEL_REAL_SIZE_METERS = 13;
 const showVoyagerModels = ref(true);
+const showVoyagerLabels = ref(true);
 
 function setMaximumZoomForView(tc: TrackTarget, scale: number) {
   if (tc === "voyager1" || tc === "voyager2") {
@@ -1619,6 +1628,10 @@ body {
   // Measured; retune if the icon size changes
   .model-visibility {
     padding-left: 9px;
+  }
+
+  .model-visibility .v-selection-control {
+    min-height: 28px;
   }
 }
 
