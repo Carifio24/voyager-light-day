@@ -53,7 +53,6 @@ const URANUS_MOONS: MoonDefinition[] = [
     nearParentAu: 0.1,
   },
 ];
-console.log(URANUS_MOONS[0].table);
 
 /** shift t (ms) by whole periods so it lands in [start, start + period), and not past the table's end */
 function wrapTimeToOrbit(t: number, start: number, end: number, period: number): number {

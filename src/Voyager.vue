@@ -24,12 +24,21 @@
         <p class="highlight">VOYAGER's</p>
         <p>Journey to</p>
         <p class="highlight">One light-day</p>
-        <div class="splash-countdown">
-          <p>
-            Voyager 1 is one light-day from Earth in
-            <LightDayCountdown :target="ONE_LIGHT_DAY" />
-          </p>
-        </div>
+        <!-- only until Voyager 1 reaches one light-day -->
+        <LightDayCountdown
+          v-slot="{ time, past }"
+          :target="ONE_LIGHT_DAY"
+        >
+          <div
+            v-if="!past"
+            class="splash-countdown"
+          >
+            <p>
+              Voyager 1 will reach one light-day from Earth in
+              <span class="light-day-countdown">{{ time }}</span>
+            </p>
+          </div>
+        </LightDayCountdown>
       </div>
     </SplashScreen>
 
@@ -120,7 +129,13 @@
                   title="Zoom in"
                   @click="zoomIn"
                 >
-                  +
+                  <!-- drawn, not "+" text: font glyphs sit below the middle of the line -->
+                  <svg
+                    viewBox="0 0 10 10"
+                    aria-hidden="true"
+                  >
+                    <path d="M0 5H10M5 0V10" />
+                  </svg>
                 </button>
                 <input
                   type="range"
@@ -139,7 +154,12 @@
                   title="Zoom out"
                   @click="zoomOut"
                 >
-                  −
+                  <svg
+                    viewBox="0 0 10 10"
+                    aria-hidden="true"
+                  >
+                    <path d="M0 5H10" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -148,8 +168,14 @@
                 v-if="voyagerLightTime"
                 id="light-time"
               >
-                <div class="light-time-label">Voyager 1 Distance from Earth in Light Travel Time</div>
-                <div class="light-time-value">{{ voyagerLightTime }}</div>
+                <div class="light-time-label">Voyager 1's Light Speed Distance from Earth:</div>
+                <div class="light-time-value mt-1">
+                  <span class="light-time-number">{{ voyagerLightTime }}</span>
+                  <span class="light-time-label"></span>
+                </div>
+                <div class="light-time-label mt-2">
+                  on <span class="light-time-date">{{ shownDate }}</span>
+                </div>
               </div>
             </div>
             <div id="right-buttons">
@@ -167,33 +193,15 @@
               />
               <icon-button
                 v-model="showControls"
-                icon="gear"
-                aria-label="View controls"
+                class="sheet-toggle"
+                :icon="showControls ? 'xmark' : 'sliders'"
+                :aria-label="showControls ? 'Hide controls' : 'View controls'"
                 :color="accentColor"
                 :focus-color="accentColor"
-                tooltip-text="View controls"
+                :tooltip-text="showControls ? 'Hide controls' : 'View controls'"
                 tooltip-location="start"
                 size="1x"
               />
-              <icon-button
-                v-model="showCountdown"
-                icon="stopwatch"
-                aria-label="Countdown to one light-day"
-                :color="accentColor"
-                :focus-color="accentColor"
-                tooltip-text="Countdown to one light-day"
-                tooltip-location="start"
-                size="1x"
-                :v-focus-toggle="showCountdown"
-              />
-              <ClosableDialog
-                v-model="showCountdown"
-                title="One light-day"
-                max-width="320"
-              >
-                Voyager 1 is one light-day from Earth in
-                <LightDayCountdown :target="ONE_LIGHT_DAY" />
-              </ClosableDialog>
               <div
                 v-if="showControls"
                 id="frame-controls"
@@ -278,6 +286,7 @@
                 :end="voyagerSpan.end"
                 :step-ms="SLIDER_STEP_MS"
                 :log-scale-days="100"
+                hide-time
                 @mousedown="missionSliderUses.increment()"
               />
               <MissionTimeSlider
@@ -286,7 +295,40 @@
                 :start="stepWindow.start"
                 :end="stepWindow.end"
                 :step-ms="SLIDER_STEP_MS"
+                hide-time
               />
+            </div>
+            <!-- the countdown opens above its button, mirroring #frame-controls below the controls button -->
+            <div id="countdown-control">
+              <icon-button
+                v-model="showCountdown"
+                class="sheet-toggle"
+                :icon="showCountdown ? 'xmark' : 'alarm-clock'"
+                :aria-label="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
+                :color="accentColor"
+                :focus-color="accentColor"
+                :tooltip-text="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
+                tooltip-location="start"
+                size="1x"
+              />
+              <div
+                v-if="showCountdown"
+                id="countdown-panel"
+              >
+                <LightDayCountdown
+                  v-slot="{ time, past }"
+                  :target="ONE_LIGHT_DAY"
+                >
+                  <template v-if="past">
+                    Voyager 1 reached one light-day from Earth
+                    <span class="light-day-countdown">{{ time }}</span> ago
+                  </template>
+                  <template v-else>
+                    Voyager 1 will reach one light-day from Earth in
+                    <span class="light-day-countdown">{{ time }}</span>
+                  </template>
+                </LightDayCountdown>
+              </div>
             </div>
           </div>
 
@@ -869,6 +911,17 @@ function setVoyager2ModelPosition(time: Date) {
 }
 
 const voyagerLightTime = ref("");
+// the clock's time, as "Nov 12, 1980, 23:46 UT". h23, since hour12: false can give "24:00" at midnight
+const SHOWN_DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+  timeZone: "UTC",
+});
+const shownDate = computed(() => `${SHOWN_DATE_FORMAT.format(store.currentTime)} UT`);
 
 /** seconds as "22 h 41 m 07 s" */
 function hoursMinutesSeconds(seconds: number): string {
@@ -1440,12 +1493,19 @@ body {
     color: var(--accent-color);
     width: 20px;
     height: 20px;
-    font-size: 1rem;
-    line-height: 1;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     user-select: none;
+
+    // about the size and weight the Verdana +/− had
+    svg {
+      width: 10px;
+      height: 10px;
+      stroke: currentColor;
+      stroke-width: 1.3;
+    }
   }
 }
 
@@ -1470,19 +1530,41 @@ body {
   flex-grow: 0;
 }
 
-#frame-controls {
+// the panels that open from the right-hand buttons
+#frame-controls,
+#countdown-panel {
   position: absolute;
-  top: calc(100% + 10px);
   right: 0;
+  width: 260px;
+  padding: 8px;
   pointer-events: auto;
+  // 0.8 black, like the time controls; only the background, so the text and border stay full strength
+  background-color: var(--wwt-surface-background);
+  border: 1px solid var(--accent-color);
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.light-day-countdown {
+  font-weight: 600;
+}
+
+// holds the countdown button, so the panel can sit above it
+#countdown-control {
+  position: relative;
+}
+
+// above its button by the gap #frame-controls has below the controls button
+#countdown-panel {
+  bottom: calc(100% + 10px);
+  text-align: center;
+}
+
+#frame-controls {
+  top: calc(100% + 10px);
   display: flex;
   flex-direction: column;
   gap: 8px;
-  width: 260px;
-  padding: 8px;
-  background-color: black;
-  border: 1px solid var(--accent-color);
-  border-radius: 5px;
 
   // the current track in gold, matching the selected item in the open menu (item-color)
   .v-select__selection-text {
@@ -1505,6 +1587,23 @@ body {
     font-size: 11px;
     opacity: 0.8;
   }
+
+  // styled like the "Spacecraft size" label
+  .model-visibility .v-label {
+    font-size: 12px;
+    opacity: 0.8;
+  }
+
+  // a smaller box than vuetify's 24px
+  .model-visibility .v-selection-control__input .v-icon {
+    font-size: 18px;
+  }
+
+  // lines the drawn box (inset in its icon, which is centered in a wider input) up with the 16px text inset above.
+  // Measured; retune if the icon size changes
+  .model-visibility {
+    padding-left: 9px;
+  }
 }
 
 #center-buttons {
@@ -1526,8 +1625,24 @@ body {
   }
 
   .light-time-value {
+    font-size: 16px;
+  }
+
+  .light-time-number {
     font-family: monospace;
-    font-size: 18px;
+  }
+
+  // neither the date nor "at light speed" breaks across lines
+  .light-time-date,
+  .light-time-unit {
+    white-space: nowrap;
+    font-weight: 600;
+  }
+
+  // like the label line. Its leading space is the gap: Vue drops the newline between the spans
+  .light-time-unit {
+    font-size: 14px;
+    opacity: 0.8;
   }
 }
 
@@ -1555,16 +1670,6 @@ body {
 #event-slider {
   flex: 1 1 400px;
   min-width: 0;
-  // the current date on its own line, centered above the track
-  flex-wrap: wrap;
-  row-gap: 0;
-
-  .mission-time-now {
-    order: -1;
-    flex-basis: 100%;
-    text-align: center;
-    padding-top: 4px;
-  }
 }
 
 // small screens: controls go under the timeline. column-reverse keeps the DOM
@@ -1578,15 +1683,9 @@ body {
   align-items: stretch;
   margin-inline: auto;
 
+  // no scrubbing on small screens: just the buttons (the date is in #light-time)
   #mission-slider {
-    // the 400px basis above is a width; in a column it would become the height
-    flex: 0 0 auto;
-
-    // no scrubbing on small screens: only the current date is shown, above the buttons
-    .v-slider,
-    .mission-time-end {
-      display: none;
-    }
+    display: none;
   }
 
   .wwt-clock-controls {
@@ -1622,6 +1721,24 @@ body {
   // even padding
   padding: 8px !important;
   border-width: 2px !important;
+
+  // every icon button the size of the time controls' (35px; 28px on phones), whose sizes are
+  // set in WwtTimeControl.vue. !important beats the icons' inline sizes
+  > .v-icon {
+    font-size: 15px !important;
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  @media (width <= 600px) {
+    padding: 6px !important;
+
+    > .v-icon {
+      font-size: 12px !important;
+      width: 12px !important;
+      height: 12px !important;
+    }
+  }
 }
 
 /* The drawer buttons' pressed state: filled gold with a purple icon, instead of
@@ -1629,7 +1746,7 @@ body {
    for specificity: it has to beat the toolkit's scoped .active and :focus
    rules, and :focus would otherwise recolor the icon gold on the gold fill
    right after a click. */
-#left-buttons .icon-wrapper.sheet-toggle.active {
+.icon-wrapper.sheet-toggle.active {
   background-color: rgb(var(--v-theme-primary));
   border-color: rgb(var(--v-theme-primary));
   color: rgb(var(--v-theme-secondary));
@@ -1753,6 +1870,10 @@ body {
 
   .light-time-value {
     font-size: 15px;
+  }
+
+  .light-time-unit {
+    font-size: 11px;
   }
 }
 
