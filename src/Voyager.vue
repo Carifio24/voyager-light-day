@@ -551,6 +551,7 @@
 <script setup lang="ts">
 import { ref, shallowRef, computed, onMounted, watch, nextTick } from "vue";
 import type { StyleValue } from "vue";
+import { watchThrottled } from "@vueuse/core";
 import { WWTControl } from "@wwtelescope/engine";
 import { WWTComponent as WorldWideTelescope, engineStore } from "@wwtelescope/engine-pinia";
 import { useWWTKeyboardControls, useFullscreen, IconButton, CreditLogos } from "@cosmicds/vue-toolkit";
@@ -922,7 +923,20 @@ function setVoyager2ModelPosition(time: Date) {
   voyager2Model.scale.setScalar(scale / METERS_PER_AU);
 }
 
+// The top label (distance, date, and was/is/will be) follows the clock at most every LABEL_THROTTLE_MS,
+// so fast playback doesn't flicker its digits. Trailing, so it ends on the time the clock stops at
+const LABEL_THROTTLE_MS = 500;
+const labelTime = ref<Date | null>(null);
 const voyagerLightTime = ref("");
+watchThrottled(
+  () => store.currentTime,
+  (time) => {
+    labelTime.value = time;
+    updateVoyagerLightTime(time);
+  },
+  { throttle: LABEL_THROTTLE_MS },
+);
+
 // the clock's time, as "Nov 12, 1980, 23:46 UT". h23, since hour12: false can give "24:00" at midnight
 const SHOWN_DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -936,16 +950,22 @@ const SHOWN_DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
 // a one-digit day gets a figure space (U+2007, a digit's width), so the text doesn't change width
 // between the 9th and the 10th. A plain space is narrower than a digit
 const shownDate = computed(() => {
-  const parts = SHOWN_DATE_FORMAT.formatToParts(store.currentTime);
+  if (!labelTime.value) {
+    return "";
+  }
+  const parts = SHOWN_DATE_FORMAT.formatToParts(labelTime.value);
   const text = parts.map(({ type, value }) => (type === "day" ? value.padStart(2, " ") : value)).join("");
   return `${text} UT`;
 });
 
 // "is" within a minute of the real time (the date shows minutes), else "was" or "will be".
-// Recomputed when the clock's time changes, so a paused clock keeps its word as real time moves on
+// Recomputed when the label's time changes, so a paused clock keeps its word as real time moves on
 const NOW_TOLERANCE_MS = 60 * 1000;
 const distanceVerb = computed(() => {
-  const ahead = store.currentTime.getTime() - Date.now();
+  if (!labelTime.value) {
+    return "";
+  }
+  const ahead = labelTime.value.getTime() - Date.now();
   if (Math.abs(ahead) < NOW_TOLERANCE_MS) {
     return "is";
   }
@@ -960,8 +980,8 @@ function hoursMinutesSeconds(seconds: number): string {
 }
 
 /** Voyager's distance from Earth as light time (distance ÷ c), for the display */
-function updateVoyagerLightTime() {
-  const v = voyager1PositionAt(SpaceTimeController.get_now().getTime());
+function updateVoyagerLightTime(time: Date) {
+  const v = voyager1PositionAt(time.getTime());
   voyagerLightTime.value = v
     ? hoursMinutesSeconds(lightTimeSeconds(distanceFromBodyKm(v, VOYAGER_FRAME, SolarSystemObjects.earth)))
     : hoursMinutesSeconds(0);
@@ -1012,7 +1032,6 @@ function setUpVoyagerScene() {
     const time = now.getTime();
     setVoyager1ModelPosition(now);
     setVoyager2ModelPosition(now);
-    updateVoyagerLightTime();
     voyager1Location.value = voyager1PositionAt(time);
     voyager2Location.value = voyager2PositionAt(time);
     stopAtEnd();
