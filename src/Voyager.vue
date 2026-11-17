@@ -31,6 +31,35 @@
 
     <v-main>
       <div id="main-content">
+
+        <wwt-tracked-content
+          :store="store"
+          :position="voyager1Location"
+          :offset-x="15"
+          :offset-y="-5"
+        >
+          <p
+            class="voyager-label"
+            :style="`color: ${VOYAGER_1_COLOR}`"
+          >
+              <strong>Voyager 1</strong>
+          </p>
+        </wwt-tracked-content>
+
+        <wwt-tracked-content
+          :store="store"
+          :position="voyager2Location"
+          :offset-x="15"
+          :offset-y="-5"
+        >
+          <p
+            class="voyager-label"
+            :style="`color: ${VOYAGER_2_COLOR}`"
+          >
+              <strong>Voyager 2</strong>
+          </p>
+        </wwt-tracked-content>
+
         <WorldWideTelescope :wwt-namespace="wwtNamespace"></WorldWideTelescope>
         <wwt-loader v-model="isLoading" />
 
@@ -584,6 +613,7 @@ import {
   LINE_TOLERANCE_AU,
   type TrajectoryLine,
 } from "./horizons/orbitLine";
+import type { HorizonsVector } from "./horizons/horizons";
 import { createMovingMarkerLayer, skyMapReady } from "./horizons/horizonsSpreadsheet";
 import { createMoonOrbits, createMoonLayers } from "./horizons/saturnMoons";
 import { distanceFromBodyKm, lightTimeSeconds } from "./horizons/lightTime";
@@ -605,6 +635,9 @@ const voyager1PositionAt = voyager1Table.positionAt(VOYAGER_FRAME);
 // Voyager 2, the same way
 const voyager2Table = new HorizonsVectorTable(voyager2Data);
 const voyager2PositionAt = voyager2Table.positionAt(VOYAGER_FRAME);
+
+const voyager1Location = ref<HorizonsVector | null>(null);
+const voyager2Location = ref<HorizonsVector | null>(null);
 
 // what the WWT camera tracks (the scene is drawn relative to it): a spacecraft, or a solar system object
 const VOYAGER_TRAJECTORIES = { voyager1: voyager1PositionAt, voyager2: voyager2PositionAt };
@@ -833,10 +866,16 @@ function setUpVoyagerScene() {
   });
 
   // before useThreeModel, so the model is placed before three renders in the same frame
-  store.addFrameCallback(() => setVoyager1ModelPosition(SpaceTimeController.get_now()));
-  store.addFrameCallback(() => setVoyager2ModelPosition(SpaceTimeController.get_now()));
-  store.addFrameCallback(updateVoyagerLightTime);
-  store.addFrameCallback(stopAtEnd);
+  store.addFrameCallback(() => {
+    const now = SpaceTimeController.get_now();
+    const time = now.getTime();
+    setVoyager1ModelPosition(now);
+    setVoyager2ModelPosition(now);
+    updateVoyagerLightTime();
+    voyager1Location.value = voyager1PositionAt(time);
+    voyager2Location.value = voyager2PositionAt(time);
+    stopAtEnd();
+  });
   useThreeModel(store, glbUrl, renderThree, (model) => (voyager1Model = model));
   useThreeModel(store, glbUrl, renderThree, (model) => (voyager2Model = model));
 }
@@ -1490,6 +1529,10 @@ body {
   padding: 0;
 }
 
+.voyager-label {
+  font-family: monospace;
+ }
+ 
 .drawer-bottom .tour-sheet {
   padding: 4px;
 }

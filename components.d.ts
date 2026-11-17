@@ -28,5 +28,6 @@ declare module 'vue' {
     WebGlTest: typeof import('./src/components/WebGlTest.vue')['default']
     WwtLoader: typeof import('@/components/Loader.vue')['default']
     WwtTimeControl: typeof import('./src/components/WwtTimeControl.vue')['default']
+    WWTTrackedContent: typeof import('./src/components/WWTTrackedContent.vue')['default']
   }
 }
