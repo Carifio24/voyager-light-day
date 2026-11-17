@@ -1,7 +1,7 @@
 <!-- The User Guide page content. Wrap in TabPage to show it as a tab in TabbedSheet. -->
 <template>
-  <div class="d-flex flex-column fill-height">
-    This app is powered by <easyLink href="https://worldwidetelescope.org/home">WorldWide Telescope</easyLink>.
+  <div class="d-flex flex-column fill-height user-guide">
+    This app is powered by <easyLink href="https://worldwidetelescope.org/home">WorldWide Telescope</easyLink>
     <h4 class="user-guide-header mt-2">Sky Navigation</h4>
     <p>To navigate the WWT view, use the following controls:</p>
     <v-row
@@ -138,6 +138,9 @@ const emit = defineEmits<(e: "change-privacy-settings") => void>();
 </script>
 
 <style scoped>
+.user-guide {
+  font-size: 0.9em;
+}
 /* the gap under the credits, so the last line clears the bottom of the sheet */
 .end-spacer {
   height: 25px;
