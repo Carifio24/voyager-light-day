@@ -1272,11 +1272,11 @@ body {
   width: 260px;
   padding: 8px;
   pointer-events: auto;
-  background-color: black;
+  // 0.8 black, like the time controls; only the background, so the text and border stay full strength
+  background-color: var(--wwt-surface-background);
   border: 1px solid var(--accent-color);
   border-radius: 5px;
   font-size: 14px;
-  opacity: 0.8;
 }
 
 .light-day-countdown {
