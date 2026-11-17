@@ -28,14 +28,16 @@ interface MoonDefinition {
   periodDays: number;
   color: string;
   parent: SolarSystemObjects;
+  /** the moon's marker and orbit line show only while the camera is within this distance (au) of its parent */
+  nearParentAu: number;
 }
 
 const SATURN_MOONS: MoonDefinition[] = [
-  { name: "Titan", table: new HorizonsVectorTable(titanData), periodDays: 15.945448, color: TITAN_COLOR, parent: SATURN },
+  { name: "Titan", table: new HorizonsVectorTable(titanData), periodDays: 15.945448, color: TITAN_COLOR, parent: SATURN, nearParentAu: 1 },
 ];
 
 const URANUS_MOONS: MoonDefinition[] = [
-  { name: "Miranda", table: new HorizonsVectorTable(mirandaData), periodDays: 1.413479, color: MIRANDA_COLOR, parent: SolarSystemObjects.uranus },
+  { name: "Miranda", table: new HorizonsVectorTable(mirandaData), periodDays: 1.413479, color: MIRANDA_COLOR, parent: SolarSystemObjects.uranus, nearParentAu: 0.1 },
 ];
 console.log(URANUS_MOONS[0].table);
 
@@ -64,28 +66,21 @@ function distanceFromCamera(body: SolarSystemObjects): number {
   return Math.hypot(b.x - c.x, b.y - c.y, b.z - c.z);
 }
 
-const nearParent = (parent: SolarSystemObjects) => distanceFromCamera(parent) < 1; // 1au works
+const nearParent = (moon: MoonDefinition) => distanceFromCamera(moon.parent) < moon.nearParentAu;
 
-/** Orbit lines for Saturn's major moons (their 1980 orbits), drawn around Saturn every frame */
+/** Orbit lines for the moons (one orbit each), drawn around their parents every frame */
 export function createMoonOrbits(store: EngineStore) {
-  const saturnLineLists = SATURN_MOONS.map((moon) =>
-    createOrbitLineList(densifiedRows(moon.table.j2000(SATURN), LINE_TOLERANCE_AU), moon.color),
-  );
-  const uranusLineLists = URANUS_MOONS.map((moon) =>
-    createOrbitLineList(densifiedRows(moon.table.j2000(moon.parent), LINE_TOLERANCE_AU), moon.color),
-  );
+  const orbits = [...SATURN_MOONS, ...URANUS_MOONS].map((moon) => ({
+    moon,
+    lineList: createOrbitLineList(densifiedRows(moon.table.j2000(moon.parent), LINE_TOLERANCE_AU), moon.color),
+  }));
   const drawOrbits = () => {
-    if (nearParent(SATURN)) {
-      const rotation = precessionMatrix(tdbNow());
-      saturnLineLists.forEach((lineList) => drawOrbitLineInFrame(lineList, SATURN, rotation));
+    const shown = orbits.filter(({ moon }) => nearParent(moon));
+    if (shown.length === 0) {
+      return;
     }
-    
-    if (nearParent(SolarSystemObjects.uranus)) {
-      const rotation = precessionMatrix(tdbNow());
-      uranusLineLists.forEach((lineList) => drawOrbitLineInFrame(lineList, SolarSystemObjects.uranus, rotation));
-    }
-    
-    
+    const rotation = precessionMatrix(tdbNow());
+    shown.forEach(({ moon, lineList }) => drawOrbitLineInFrame(lineList, moon.parent, rotation));
   };
   store.addFrameCallback(drawOrbits);
   return () => store.removeFrameCallback(drawOrbits);
@@ -97,7 +92,7 @@ export function createMoonLayers(store: EngineStore): Promise<SpreadSheetLayer[]
     [...SATURN_MOONS, ...URANUS_MOONS].map((moon) => {
       const positionAt = moonPositionAt(moon.table, moon.periodDays, moon.parent);
       // null hides the marker
-      return createMovingMarkerLayer(store, moon.name, moon.parent, moon.color, (t) => (nearParent(moon.parent) ? positionAt(t) : null));
+      return createMovingMarkerLayer(store, moon.name, moon.parent, moon.color, (t) => (nearParent(moon) ? positionAt(t) : null));
     }),
   );
 }

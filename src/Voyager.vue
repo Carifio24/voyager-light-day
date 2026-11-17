@@ -185,10 +185,10 @@
                     hide-details
                   >
                     <template #prepend>
-                      <span class="model-size-end">Actual</span>
+                      <span class="model-size-end">1,000x</span>
                     </template>
                     <template #append>
-                      <span class="model-size-end">Enlarged</span>
+                      <span class="model-size-end">Even larger!</span>
                     </template>
                   </v-slider>
                 </div>
@@ -652,13 +652,14 @@ const voyager2Layer = shallowRef<SpreadSheetLayer | null>(null);
 const saturnMoonLayers = shallowRef<SpreadSheetLayer[]>([]);
 
 function drawVoyagerOrbit() {
-  // J2000 points, rotated to the scene's ecliptic of date
+  // J2000 points, rotated to the scene's ecliptic of date, drawn only up to WWT's current time (where the spacecraft are)
+  const now = SpaceTimeController.get_now().getTime();
   const jdtdb = tdbNow();
   if (voyager1Line && showV1.value) {
-    drawTrajectoryLineInFrame(voyager1Line, VOYAGER_FRAME, jdtdb);
+    drawTrajectoryLineInFrame(voyager1Line, VOYAGER_FRAME, jdtdb, now);
   }
   if (voyager2Line && showv2.value) {
-    drawTrajectoryLineInFrame(voyager2Line, VOYAGER_FRAME, jdtdb);
+    drawTrajectoryLineInFrame(voyager2Line, VOYAGER_FRAME, jdtdb, now);
   }
 }
 
@@ -669,9 +670,9 @@ function createVoyagerOrbit() {
 }
 
 function createVoyagerLayer() {
-  createMovingMarkerLayer(store, "Voyager 2", VOYAGER_FRAME, VOYAGER_2_COLOR, voyager2PositionAt, false)
+  createMovingMarkerLayer(store, "Voyager 2", VOYAGER_FRAME, VOYAGER_2_COLOR, voyager2PositionAt, true)
     .then((layer) => (voyager2Layer.value = layer));
-  createMovingMarkerLayer(store, "Voyager 1", VOYAGER_FRAME, VOYAGER_1_COLOR, voyager1PositionAt, false).then(
+  createMovingMarkerLayer(store, "Voyager 1", VOYAGER_FRAME, VOYAGER_1_COLOR, voyager1PositionAt, true).then(
     (layer) => (voyager1Layer.value = layer),
   );
 }
@@ -692,7 +693,7 @@ let voyager2Model: THREE.Group | null = null;
 const modelLogScale = ref(7);
 const MIN_MODEL_SCALE = 3; // log10 of the model's magnification (0 is actual size)
 const METERS_PER_AU = 149597870700;
-const MODEL_REAL_SIZE_METERS = 31;
+const MODEL_REAL_SIZE_METERS = 13;
 const showVoyagerModels = ref(true);
 
 function setMaximumZoomForView(tc: TrackTarget, scale: number) {
