@@ -567,7 +567,7 @@ useWWTKeyboardControls(store);
 
 // state in the url (the tour step) //
 import { useUrlState } from "./composables/useUrlState";
-const urlState = useUrlState({ autoUpdate: true, inAddressBar: true, clearOnLoad: false });
+const urlState = useUrlState({ autoUpdate: true, inAddressBar: false, clearOnLoad: true });
 
 // kiosk / fullscreen //
 const kiosk = urlState.get("kiosk")?.toLowerCase() === "true";
@@ -1197,7 +1197,7 @@ const tour = useTour<TourStepContent>({
     },
   })),
 });
-urlState.track("tour", tour.stepID);
+// urlState.track("tour", tour.stepID);
 
 // playback //
 // While playing, a frame callback sets the clock rate and the camera for wherever the clock is.
@@ -1455,6 +1455,8 @@ function closeSplashScreen() {
   // has the user responsed the opt out, then show the privacy dialog
   // pass `true` to only show it once per session, even if the user does not respond (for example if it shows up after an intro sequence)
   conditionalShowPrivacyDialog();
+  tour.goToStep(0, true);
+  showTour.value = true;
 }
 </script>
 
