@@ -363,7 +363,7 @@
       tag="aside"
       aria-label="Information"
       :location="sidePanel ? 'start' : 'bottom'"
-      :width="sidePanel ? drawerWidth : undefined"
+      :width="sidePanel ? drawerWidth : drawerHeight"
       :mobile-breakpoint="0"
       :class="sidePanel ? 'drawer-side' : 'drawer-bottom'"
       :temporary="false"
@@ -533,6 +533,7 @@
         v-model:show="showDataCollectionOptOut"
         v-model:show-privacy-policy="showPrivacyPolicyInfo"
         v-model:response-opt-out="responseOptOut"
+        :order="sidePanel ? 0 : -1"
       />
     </v-slide-y-transition>
   </v-app>
@@ -606,9 +607,11 @@ function toggleInfoSheetTab(tabValue: string) {
 
 // styles //
 import { useAppLayout } from "./composables/useAppLayout";
-const { smallSize, sidePanel, viewportWidth } = useAppLayout();
+const { smallSize, sidePanel, viewportWidth, viewportHeight } = useAppLayout();
 const DRAWER_WIDTH_FRACTION = 34; // 34% of the viewport width
 const drawerWidth = computed(() => Math.round((viewportWidth.value * DRAWER_WIDTH_FRACTION) / 100));
+const DRAWER_HEIGHT_FRACTION = 40;
+const drawerHeight = computed(() => Math.round((viewportHeight.value * DRAWER_HEIGHT_FRACTION) / 100));
 
 import { useTheme, useDisplay } from "vuetify";
 const theme = useTheme();
@@ -626,7 +629,7 @@ const cssVars = computed(() => {
     "--accent-color": accentColor.value,
     "--accent-color-2": accentColor2.value,
     "--drawer-width": `${DRAWER_WIDTH_FRACTION}vw`,
-    "--drawer-bottom-height": "40vh",
+    "--drawer-bottom-height": `${DRAWER_HEIGHT_FRACTION}vh`,
   } as StyleValue;
 });
 
