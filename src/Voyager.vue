@@ -1123,6 +1123,13 @@ watch(responseOptOut, (newVal) => {
   }
 });
 
+watch(showDataCollectionOptOut, (isOpen, wasOpen) => {
+  // if we close it without answering, set responseOptOut to false (this is an opt out not an opt in)
+  if (wasOpen && !isOpen && responseOptOut.value === null) {
+    responseOptOut.value = false;
+  }
+});
+
 const {
   showRating,
   question,
