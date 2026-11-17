@@ -1128,7 +1128,7 @@ const {
   initializePrompt,
 } = useUserExperienceRating(STORY_NAME, userID, {
   responseOptOut,
-  timeout: 60_000, // lets not use it for now,
+  timeout: 30_000, // lets not use it for now,
   questions: ["How do you like this app?"],
   mixin: false,
 });
