@@ -67,6 +67,18 @@ export const V2_NEPTUNE_ENCOUNTER: TimeRange = {
 
 export const ONE_LIGHT_DAY = new Date("2026-11-18T10:16:00Z");
 
+// Voyager 1 at one light-day: the tour's first stop (LIGHT_DAY_INTRO) and its last
+const ONE_LIGHT_DAY_VIEW: ViewSpec = {
+  time: "2026-11-18T10:16:00.000Z",
+  track: "voyager1",
+  lat: 3.1273276264099112,
+  lng: 266.02358244622883,
+  zoom: 1.3123507461412482,
+  rotation: 0.6279999999999997,
+  angle: -0.0009999999999999994,
+  modelLogScale: 9.61,
+};
+
 const DAY_MS = 86400000;
 
 export function eventWindow(events: MissionEvent[], i: number): TimeRange {
@@ -137,6 +149,8 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
       angle: 0,
       modelLogScale: 5.64,
     },
+    // ~3 h/s, so playback lingers on launch before ramping up
+    rate: 10_000,
   },
   {
     title: "Earth and Moon",
@@ -165,6 +179,9 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
       angle: 0,
       modelLogScale: 5.64,
     },
+    // ~12 days/s. The fastest rate in V1_LAUNCH, which playback keeps to until the window ends (Nov 1),
+    // so a slower one would drag through the 44 days after this photo
+    rate: 1_000_000,
   },
   {
     title: "Jupiter closest approach",
@@ -440,18 +457,27 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     credit: "NASA/JPL-Caltech",
     imageTaken: "artist's concept, 2013",
     track: SolarSystemObjects.sun,
-    view: {
-      time: "2026-11-18T10:16:00.000Z",
-      track: "voyager1",
-      lat: 3.1273276264099112,
-      lng: 266.02358244622883,
-      // zoom: 1.3123507461412482,
-      zoom: 0.0003382603300590021,
-      // rotation: 0.6279999999999997,
-      rotation: 0,
-      angle: -0.0009999999999999994,
-      modelLogScale: 5.64,
-    },
+    view: ONE_LIGHT_DAY_VIEW,
     rate: 1000000,
   },
 ];
+
+/**
+ * The tour's opening stop: Voyager 1 at one light-day, before the mission from launch on.
+ * Not in VOYAGER_1_EVENTS, whose date order playback relies on; see TOUR_EVENTS in Voyager.vue
+ */
+export const LIGHT_DAY_INTRO: MissionEvent = {
+  // TODO: placeholder title and caption, to be written
+  title: "One Light Day Milestone!",
+  caption: `On November 18, 2026, 10:16 UT, NASA’s beloved Voyager 1 spacecraft will reach an extraordinary milestone of one light day from Earth—a distance so vast (16 billion miles!) that a message traveling at the speed of light takes a full 24 hours to reach us.`,
+  date: ONE_LIGHT_DAY,
+  image: lightDay,
+  imageUrl: "https://science.nasa.gov/photojournal/voyager-goes-interstellar-artist-concept/",
+  credit: "NASA/JPL-Caltech",
+  imageTaken: "artist's concept, 2013",
+  track: SolarSystemObjects.sun,
+  // as eventWindow gives the last stop: 2 days either side
+  window: { start: new Date(ONE_LIGHT_DAY.getTime() - 2 * DAY_MS), end: new Date(ONE_LIGHT_DAY.getTime() + 2 * DAY_MS) },
+  view: ONE_LIGHT_DAY_VIEW,
+  rate: 1000000,
+};

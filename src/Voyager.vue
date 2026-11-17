@@ -300,9 +300,12 @@
               <MissionTimeSlider
                 v-else
                 id="event-slider"
+                :class="{ 'outside-step': outsideStepWindow }"
+                :inert="outsideStepWindow"
                 :start="stepWindow.start"
                 :end="stepWindow.end"
                 :step-ms="SLIDER_STEP_MS"
+                color="tour-accent"
                 hide-time
               />
             </div>
@@ -382,8 +385,8 @@
         tabindex="-1"
         :tour="tourSheetTour"
         :small-size="false"
-        :accent-color="accentColor"
-        :border-color="borderColor"
+        :accent-color="tourAccentColor"
+        :border-color="tourAccentColor"
         background-color="black"
         show-next-on-last-step
         :next-text="onLastStep ? 'Close' : 'Next'"
@@ -550,6 +553,7 @@
 <script setup lang="ts">
 import { ref, shallowRef, computed, onMounted, watch, nextTick } from "vue";
 import type { StyleValue } from "vue";
+import { watchThrottled } from "@vueuse/core";
 import { WWTControl } from "@wwtelescope/engine";
 import { WWTComponent as WorldWideTelescope, engineStore } from "@wwtelescope/engine-pinia";
 import { useWWTKeyboardControls, useFullscreen, IconButton, CreditLogos } from "@cosmicds/vue-toolkit";
@@ -628,7 +632,8 @@ const theme = useTheme();
 // can access them directly as `color="primary" on the prop, and they are aleady available in the CSS as --v-theme-primary and --v-theme-secondary
 const accentColor = computed(() => theme.current.value.colors.primary);
 const accentColor2 = computed(() => theme.current.value.colors.secondary);
-const borderColor = computed(() => theme.current.value.colors.primary);
+// lavender, for the tour: its sheet and its step slider
+const tourAccentColor = computed(() => theme.current.value.colors["tour-accent"]);
 
 const { xs } = useDisplay();
 
@@ -731,7 +736,7 @@ function applyTrack(target: TrackTarget) {
 }
 watch(trackingCenter, applyTrack);
 const VOYAGER_2_COLOR = "#00ffff";
-const VOYAGER_1_COLOR = "#ffff00";
+const VOYAGER_1_COLOR = "#ffda8a"; 
 let voyager1Line: TrajectoryLine | null = null;
 let voyager2Line: TrajectoryLine | null = null;
 const showV1 = ref(true);
@@ -769,7 +774,7 @@ function createVoyagerLayer() {
 
 // time sliders: the whole file, in 1 minute steps
 const voyagerSpan = voyager2Table.timeSpan; // voyager 2 is longer
-voyagerSpan.end = new Date("Dec 31 2026 23:59:59 UTC"); // Cut off time after 2026.
+voyagerSpan.end = new Date("Dec 31 2037 23:59:59 UTC"); // Cut off time after 2037 (the data goes on to 2099)
 const SLIDER_STEP_MS = 60 * 1000;
 
 import * as THREE from "three";
@@ -922,7 +927,20 @@ function setVoyager2ModelPosition(time: Date) {
   voyager2Model.scale.setScalar(scale / METERS_PER_AU);
 }
 
+// The top label (distance, date, and was/is/will be) follows the clock at most every LABEL_THROTTLE_MS,
+// so fast playback doesn't flicker its digits. Trailing, so it ends on the time the clock stops at
+const LABEL_THROTTLE_MS = 500;
+const labelTime = ref<Date | null>(null);
 const voyagerLightTime = ref("");
+watchThrottled(
+  () => store.currentTime,
+  (time) => {
+    labelTime.value = time;
+    updateVoyagerLightTime(time);
+  },
+  { throttle: LABEL_THROTTLE_MS },
+);
+
 // the clock's time, as "Nov 12, 1980, 23:46 UT". h23, since hour12: false can give "24:00" at midnight
 const SHOWN_DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -936,16 +954,22 @@ const SHOWN_DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
 // a one-digit day gets a figure space (U+2007, a digit's width), so the text doesn't change width
 // between the 9th and the 10th. A plain space is narrower than a digit
 const shownDate = computed(() => {
-  const parts = SHOWN_DATE_FORMAT.formatToParts(store.currentTime);
+  if (!labelTime.value) {
+    return "";
+  }
+  const parts = SHOWN_DATE_FORMAT.formatToParts(labelTime.value);
   const text = parts.map(({ type, value }) => (type === "day" ? value.padStart(2, " ") : value)).join("");
   return `${text} UT`;
 });
 
 // "is" within a minute of the real time (the date shows minutes), else "was" or "will be".
-// Recomputed when the clock's time changes, so a paused clock keeps its word as real time moves on
+// Recomputed when the label's time changes, so a paused clock keeps its word as real time moves on
 const NOW_TOLERANCE_MS = 60 * 1000;
 const distanceVerb = computed(() => {
-  const ahead = store.currentTime.getTime() - Date.now();
+  if (!labelTime.value) {
+    return "";
+  }
+  const ahead = labelTime.value.getTime() - Date.now();
   if (Math.abs(ahead) < NOW_TOLERANCE_MS) {
     return "is";
   }
@@ -960,8 +984,8 @@ function hoursMinutesSeconds(seconds: number): string {
 }
 
 /** Voyager's distance from Earth as light time (distance ÷ c), for the display */
-function updateVoyagerLightTime() {
-  const v = voyager1PositionAt(SpaceTimeController.get_now().getTime());
+function updateVoyagerLightTime(time: Date) {
+  const v = voyager1PositionAt(time.getTime());
   voyagerLightTime.value = v
     ? hoursMinutesSeconds(lightTimeSeconds(distanceFromBodyKm(v, VOYAGER_FRAME, SolarSystemObjects.earth)))
     : hoursMinutesSeconds(0);
@@ -978,10 +1002,10 @@ const playbackRate = computed({
   },
 });
 
-function stopAtEnd() {
+/** playback past the end of the timeline loops back to launch and keeps playing */
+function loopAtEnd() {
   if (timePlaying.value && SpaceTimeController.get_now() > voyagerSpan.end) {
-    timePlaying.value = false;
-    store.setTime(new Date(voyagerSpan.end.getTime() - 1000));
+    store.setTime(VOYAGER_1_EVENTS[0].date);
   }
 }
 
@@ -1027,11 +1051,10 @@ function setUpVoyagerScene() {
     const time = now.getTime();
     setVoyager1ModelPosition(now);
     setVoyager2ModelPosition(now);
-    updateVoyagerLightTime();
     voyager1Location.value = voyager1PositionAt(time);
     voyager2Location.value = voyager2PositionAt(time);
+    loopAtEnd();
     stopAtStart();
-    stopAtEnd();
   });
   useThreeModel(store, glbUrl, renderThree, (model) => (voyager1Model = model));
   useThreeModel(store, glbUrl, renderThree, (model) => (voyager2Model = model));
@@ -1124,6 +1147,7 @@ import { TourSheet, useTour, type BaseTourStepContent } from "@cosmicds/vue-tool
 
 import {
   VOYAGER_1_EVENTS,
+  LIGHT_DAY_INTRO,
   ONE_LIGHT_DAY,
   INTERSTITIAL_RATE,
   V1_SATURN_ENCOUNTER,
@@ -1137,13 +1161,18 @@ import {
 interface TourStepContent extends BaseTourStepContent {
   event: MissionEvent;
 }
+// The tour opens on Voyager 1 at one light-day, then goes through the mission in date order.
+// Playback works from VOYAGER_1_EVENTS (it relies on date order), so mission event i is tour step i + INTRO_STEPS
+const TOUR_EVENTS = [LIGHT_DAY_INTRO, ...VOYAGER_1_EVENTS];
+const INTRO_STEPS = TOUR_EVENTS.length - VOYAGER_1_EVENTS.length;
+
 const tour = useTour<TourStepContent>({
   /**
    be careful if you have multiple moves when your app starts up
    so that they don't conflict with each other.
    */
-  // one step per mission event: the clock goes to it and the camera tracks its body
-  steps: VOYAGER_1_EVENTS.map((event) => ({
+  // one step per event: the clock goes to it and the camera tracks its body
+  steps: TOUR_EVENTS.map((event) => ({
     id: event.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
     title: event.title,
     text: [event.caption],
@@ -1292,6 +1321,7 @@ function followEventsWhilePlaying() {
   }
   updateSecondsPerFrame();
   const now = SpaceTimeController.get_now();
+
   const backward = playbackReversed.value;
   setClockRate((backward ? -1 : 1) * playbackRateAt(now, backward));
   
@@ -1301,8 +1331,8 @@ function followEventsWhilePlaying() {
   if (!showTour.value) {
     return;
   }
-  if (step !== undefined && step !== tour.stepIndex.value) {
-    tour.goToStep(step, true);
+  if (step !== undefined && step + INTRO_STEPS !== tour.stepIndex.value) {
+    tour.goToStep(step + INTRO_STEPS, true);
   }
   if (step !== currentStep) {
     // only on a change, so a track picked by hand lasts until the next one
@@ -1313,6 +1343,11 @@ function followEventsWhilePlaying() {
 store.waitForReady().then(() => store.addFrameCallback(followEventsWhilePlaying));
 watch(timePlaying, (playing) => {
   if (playing) {
+    // playing from the intro plays the mission, from launch (from the last stop on, it plays to the
+    // end of the timeline and loops back: loopAtEnd)
+    if (showTour.value && tour.stepIndex.value < INTRO_STEPS) {
+      store.setTime(VOYAGER_1_EVENTS[0].date);
+    }
     followEventsWhilePlaying(); // before the clock moves, or its first frame runs at the old rate
   }
 });
@@ -1346,11 +1381,20 @@ const tourSheetTour = {
 
 // the step's slider: its event's window (it holds no other event), within the data
 const stepWindow = computed(() => {
-  const { start, end } = eventWindow(VOYAGER_1_EVENTS, tour.stepIndex.value);
+  const i = tour.stepIndex.value;
+  // the intro has its own window; a mission event's depends on its neighbors in date order
+  const { start, end } = i < INTRO_STEPS ? TOUR_EVENTS[i].window! : eventWindow(VOYAGER_1_EVENTS, i - INTRO_STEPS);
   return {
     start: new Date(Math.max(start.getTime(), voyagerSpan.start.getTime())),
     end: new Date(Math.min(end.getTime(), voyagerSpan.end.getTime())),
   };
+});
+
+// the clock is between stops (as it is while playing from one to the next), where the step's slider would
+// sit pinned at an end: it fades out until the clock reaches a stop again
+const outsideStepWindow = computed(() => {
+  const t = store.currentTime.getTime();
+  return t < stepWindow.value.start.getTime() || t > stepWindow.value.end.getTime();
 });
 
 // Set by the last step's Close, so the next Show Tour starts over at the first
@@ -1679,7 +1723,7 @@ body {
   padding: 6px 14px;
   text-align: center;
   background-color: var(--wwt-surface-background);
-  border-radius: 4px;
+  border-radius: 8px;
 
   .light-time-label {
     font-size: 14px;
@@ -1715,7 +1759,11 @@ body {
   flex-wrap: wrap-reverse;
   justify-content: center;
   background-color: var(--wwt-surface-background);
+  border-radius: 8px;
   padding-inline: 8px;
+  // 2px more on top: the time control has 2px of its own space under the rate line, so this centers
+  // the content. (The stacked tour layout below has its own top padding.)
+  padding-top: 10px;
   padding-bottom: 8px;
 }
 
@@ -1733,6 +1781,15 @@ body {
   // start, not flex-start, which wrap-reverse would flip to the bottom
   align-self: start;
   height: 35px;
+}
+
+// between tour stops (see outsideStepWindow). It keeps its space, so the timeline doesn't shift
+#event-slider {
+  transition: opacity 0.4s;
+
+  &.outside-step {
+    opacity: 0;
+  }
 }
 
 // small screens: controls go under the timeline. column-reverse keeps the DOM
@@ -1758,6 +1815,8 @@ body {
 
   &.in-tour {
     flex: 1 1 auto;
+    // the event slider is on top here, and its thumb already sits 6px down in its own box
+    padding-top: 4px;
   }
 
   #event-slider {
@@ -1866,12 +1925,14 @@ body {
   overflow: hidden;
 }
 
-/* why-roman's Back/Next: a dark fill with an accent outline, rather than the
-   toolkit's solid accent fill. !important because Vuetify sets a hex
-   `color` prop as inline background and text colors. */
+/* Back/Next: gold with black text, though the rest of the tour sheet is lavender
+   (its accent color). The border too, which would otherwise be the lavender
+   accent. !important because Vuetify sets a hex `color` prop as inline
+   background and text colors. */
 .tour-sheet .tour-text-controls .v-btn {
-  background-color: rgb(var(--v-theme-secondary)) !important;
-  color: white !important;
+  background-color: rgb(var(--v-theme-primary)) !important;
+  border-color: rgb(var(--v-theme-primary)) !important;
+  color: black !important;
 }
 
 /* The empty dividers between the step dots were 16px each (Vuetify's
