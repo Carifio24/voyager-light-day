@@ -53,6 +53,7 @@
           :offset-y="-5"
         >
           <p
+            v-show="showVoyagerLabels"
             class="voyager-label"
             :style="`color: ${VOYAGER_1_COLOR}`"
           >
@@ -67,6 +68,7 @@
           :offset-y="-5"
         >
           <p
+            v-show="showVoyagerLabels"
             class="voyager-label"
             :style="`color: ${VOYAGER_2_COLOR}`"
           >
@@ -168,13 +170,12 @@
                 v-if="voyagerLightTime"
                 id="light-time"
               >
-                <div class="light-time-label">Voyager 1's Light Speed Distance from Earth:</div>
-                <div class="light-time-value mt-1">
-                  <span class="light-time-number">{{ voyagerLightTime }}</span>
-                  <span class="light-time-label"></span>
+                <div class="light-time-label">Voyager 1's Light Speed Distance from Earth</div>
+                <div class="light-time-value my-1">
+                  <span class="light-time-label">{{ distanceVerb }}</span><span class="light-time-number">&emsp;{{ voyagerLightTime }}</span>
                 </div>
-                <div class="light-time-label mt-2">
-                  on <span class="light-time-date">{{ shownDate }}</span>
+                <div class="light-time-label">
+                  on<span class="light-time-date">&emsp;{{ shownDate }}</span>
                 </div>
               </div>
             </div>
@@ -241,8 +242,14 @@
                     density="compact"
                     hide-details
                   />
+                  <v-checkbox
+                    v-model="showVoyagerLabels"
+                    label="Show Voyager labels"
+                    density="compact"
+                    hide-details
+                  />
                 </div>
-                <div class="playback-rate-input">
+                <!-- <div class="playback-rate-input">
                   <v-text-field
                     v-model.number="playbackRate"
                     label="Playback rate (seconds per second)"
@@ -250,7 +257,7 @@
                     density="compact"
                     hide-details
                   />
-                </div>
+                </div> -->
               </div>
             </div>
           </div>
@@ -774,6 +781,7 @@ const MIN_MODEL_SCALE = 3; // log10 of the model's magnification (0 is actual si
 const METERS_PER_AU = 149597870700;
 const MODEL_REAL_SIZE_METERS = 13;
 const showVoyagerModels = ref(true);
+const showVoyagerLabels = ref(true);
 
 function setMaximumZoomForView(tc: TrackTarget, scale: number) {
   if (tc === "voyager1" || tc === "voyager2") {
@@ -921,7 +929,24 @@ const SHOWN_DATE_FORMAT = new Intl.DateTimeFormat("en-US", {
   hourCycle: "h23",
   timeZone: "UTC",
 });
-const shownDate = computed(() => `${SHOWN_DATE_FORMAT.format(store.currentTime)} UT`);
+// a one-digit day gets a figure space (U+2007, a digit's width), so the text doesn't change width
+// between the 9th and the 10th. A plain space is narrower than a digit
+const shownDate = computed(() => {
+  const parts = SHOWN_DATE_FORMAT.formatToParts(store.currentTime);
+  const text = parts.map(({ type, value }) => (type === "day" ? value.padStart(2, " ") : value)).join("");
+  return `${text} UT`;
+});
+
+// "is" within a minute of the real time (the date shows minutes), else "was" or "will be".
+// Recomputed when the clock's time changes, so a paused clock keeps its word as real time moves on
+const NOW_TOLERANCE_MS = 60 * 1000;
+const distanceVerb = computed(() => {
+  const ahead = store.currentTime.getTime() - Date.now();
+  if (Math.abs(ahead) < NOW_TOLERANCE_MS) {
+    return "is";
+  }
+  return ahead < 0 ? "was" : "will be";
+});
 
 /** seconds as "22 h 41 m 07 s" */
 function hoursMinutesSeconds(seconds: number): string {
@@ -1604,6 +1629,10 @@ body {
   .model-visibility {
     padding-left: 9px;
   }
+
+  .model-visibility .v-selection-control {
+    min-height: 28px;
+  }
 }
 
 #center-buttons {
@@ -1613,7 +1642,6 @@ body {
 }
 
 #light-time {
-  margin-top: -0.75rem;
   padding: 6px 14px;
   text-align: center;
   background-color: var(--wwt-surface-background);
@@ -1628,21 +1656,17 @@ body {
     font-size: 16px;
   }
 
-  .light-time-number {
+  .light-time-number,
+  .light-time-date {
     font-family: monospace;
   }
 
   // neither the date nor "at light speed" breaks across lines
-  .light-time-date,
-  .light-time-unit {
+  .light-time-date {
     white-space: nowrap;
+    font-size: 15px;
     font-weight: 600;
-  }
-
-  // like the label line. Its leading space is the gap: Vue drops the newline between the spans
-  .light-time-unit {
-    font-size: 14px;
-    opacity: 0.8;
+    opacity: 1;
   }
 }
 
@@ -1670,6 +1694,11 @@ body {
 #event-slider {
   flex: 1 1 400px;
   min-width: 0;
+  // level with the time buttons, not the rate line under them: at the top, as tall as the
+  // 35px button row (which tops the time control), with the track centered in it.
+  // start, not flex-start, which wrap-reverse would flip to the bottom
+  align-self: start;
+  height: 35px;
 }
 
 // small screens: controls go under the timeline. column-reverse keeps the DOM
@@ -1699,6 +1728,9 @@ body {
 
   #event-slider {
     flex: 0 0 auto;
+    // stacked here, so back to full width at its own height
+    align-self: stretch;
+    height: auto;
   }
 }
 
@@ -1869,11 +1901,11 @@ body {
   }
 
   .light-time-value {
-    font-size: 15px;
+    font-size: 14px;
   }
 
-  .light-time-unit {
-    font-size: 11px;
+  .light-time-date {
+    font-size: 13px;
   }
 }
 
