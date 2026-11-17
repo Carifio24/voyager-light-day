@@ -123,7 +123,7 @@
 </template>
 
 <script setup lang="ts">
-import { h, type SetupContext } from "vue";
+import { h, type SetupContext, toRefs } from "vue";
 import { FundingAcknowledgement } from "@cosmicds/vue-toolkit";
 import { useAppLayout } from "../composables/useAppLayout";
 
@@ -132,7 +132,7 @@ const easyLink = (props: { href: string }, { slots }: SetupContext) => {
   return h("a", { href: props.href, target: "_blank", rel: "noopener" }, slots.default?.());
 };
 
-const { touchscreen } = useAppLayout();
+const { touchscreen } = toRefs(useAppLayout());
 
 const emit = defineEmits<(e: "change-privacy-settings") => void>();
 </script>
