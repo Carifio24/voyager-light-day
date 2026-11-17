@@ -725,7 +725,42 @@ function _logView() {
 
 addToWindow("logView", _logView);
 
+import { Planets, Vector3d } from "@wwtelescope/engine";
+import { flyCamera } from "./wwt-hacks";
+const FLY_SECONDS = 4;
+
+/** where the camera's viewTarget is for a track at a time (au, x, z, y). null outside a Voyager's data */
+function viewTargetAt(track: TrackTarget, lat: number, lng: number, time: Date): Vector3d | null {
+  if (typeof track !== "string") {
+    return Planets.getPlanetTargetPoint(track, lat, lng, SpaceTimeController.utcToJulian(time)); // as RenderContext.setupMatricesSolarSystem, at `time`
+  }
+  const v = VOYAGER_TRAJECTORIES[track](time.getTime());
+  if (!v) {
+    return null;
+  }
+  const origin = Planets.getPlanet3dLocation(VOYAGER_FRAME); // as useFollowTrajectory does
+  return Vector3d.create(v.x + origin.x, v.z + origin.y, v.y + origin.z);
+}
+
+/** fly the camera and the clock to a view. `to` is built like WWTControl.gotoTarget's camTo */
+function flyToView(view: ViewSpec) {
+  const end = new Date(view.time);
+  const to = WWTControl.singleton.renderContext.viewCamera.copy();
+  to.lat = view.lat;
+  to.lng = view.lng;
+  to.zoom = view.zoom;
+  to.rotation = view.rotation;
+  to.angle = view.angle;
+  to.target = typeof view.track === "string" ? SolarSystemObjects.undefined : view.track; // 65536: what Follow tracks
+  to.viewTarget = viewTargetAt(view.track, view.lat, view.lng, end) ?? to.viewTarget;
+  // before the track changes: the zoom-floor watcher renders a frame, which would snap to the new target
+  flyCamera(to, FLY_SECONDS, end);
+  trackingCenter.value = view.track;
+  modelLogScale.value = view.modelLogScale;
+}
+
 async function goToView(view: ViewSpec, instant = false) {
+  WWTControl.singleton.renderContext.viewMover = null; // stop a flight still under way, or it lands on its own view
   trackingCenter.value = view.track;
   modelLogScale.value = view.modelLogScale;
   store.setTime(new Date(view.time));
@@ -965,7 +1000,11 @@ const tour = useTour<TourStepContent>({
           return;
         }
         if (event.view) {
-          goToView(event.view);
+          if (event.fly) {
+            flyToView(event.view);
+          } else {
+            goToView(event.view);
+          }
           return;
         }
         store.setTime(event.date);

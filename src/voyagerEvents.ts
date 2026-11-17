@@ -34,6 +34,8 @@ export interface MissionEvent {
   windowDays?: number;
   window?: TimeRange;
   view?: ViewSpec;
+  /** fly to `view` (camera and clock) instead of jumping */
+  fly?: boolean;
   // Rate (seconds per seconds)
   rate?: number;
 }
@@ -210,6 +212,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     imageTaken: "1979-03-05 01:30 UT",
     track: SolarSystemObjects.io,
     window: V1_JUPITER_ENCOUNTER,
+    fly: true,
     view: {
       time: "1979-03-05T15:14:00.000Z",
       track: 10,
@@ -263,6 +266,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     imageTaken: "1981-08-17",
     track: SolarSystemObjects.saturn,
     window: V1_SATURN_ENCOUNTER,
+    fly: true,
     view: {
       time: "1980-11-12T23:46:00.000Z",
       track: 5,
@@ -360,6 +364,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     credit: "NASA/JPL/Walt Feimer",
     imageTaken: "artist's concept, 2003",
     track: SolarSystemObjects.sun,
+    fly: true,
     view: {
       time: "2004-12-16T00:00:00.000Z",
       track: 0,
@@ -385,6 +390,7 @@ export const VOYAGER_1_EVENTS: MissionEvent[] = [
     credit: "NASA/JPL-Caltech",
     imageTaken: "artist's concept, 2013",
     track: SolarSystemObjects.sun,
+    fly: true,
     view: {
       time: "2012-08-25T00:00:00.000Z",
       track: 0,

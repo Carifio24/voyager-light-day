@@ -15,6 +15,8 @@ declare module "@wwtelescope/engine" {
     get_projection(): Matrix3d;
     /** solar system: the camera relative to viewTarget (au, x, z, y), set each frame by setupMatricesSolarSystem */
     cameraPosition: Vector3d;
+    /** while set, WWT takes both cameras and the clock from it each frame; cleared when it arrives */
+    viewMover: ViewMoverKenBurnsStyle | null;
   }
 
   // this on the other hand is not exported at all, so we create the class declaration here
@@ -127,6 +129,8 @@ declare module "@wwtelescope/engine" {
     static drawPlanets(renderContext: RenderContext, opacity: number): void;
     static updatePlanetLocations(threeD: boolean): void;
     static getPlanet3dLocationJD(target: SolarSystemObjects, jNow: number): Vector3d;
+    /** the tracked body's viewTarget: its position plus one adjusted radius toward the camera. jNow 0 = this frame's cache */
+    static getPlanetTargetPoint(target: SolarSystemObjects, lat: number, lng: number, jNow: number): Vector3d;
     /** geometric, ecliptic (x, z, y): heliocentric for planets, relative to the parent for the Moon and Galilean moons */
     static getPlanetPositionDirect(target: SolarSystemObjects, jd: number): Vector3d;
     static _loadPlanetTextures(): void;
@@ -179,6 +183,14 @@ declare module "@wwtelescope/engine" {
   interface CameraParameters {
     /** solar system scene origin: the tracked object's position plus a surface offset toward the camera */
     viewTarget: Vector3d;
+  }
+
+  // exported but untyped in 7.41: the mover gotoTarget switches planets with (view_mover.js)
+  export class ViewMoverKenBurnsStyle {
+    /** `time` in seconds; the clock goes from `fromDateTime` to `toDateTime`. type 3 eases in and out */
+    constructor(from: CameraParameters, to: CameraParameters, time: number, fromDateTime: Date, toDateTime: Date, type: number);
+    get_complete(): boolean;
+    get_currentDateTime(): Date;
   }
 
   export class COR {
