@@ -289,7 +289,7 @@
               />
               <MissionTimeSlider
                 v-else
-                v-show="!TOUR_EVENTS[tour.stepIndex.value]?.noSlider && (!xs)"
+                v-show="(!TOUR_EVENTS[tour.stepIndex.value]?.noSlider || sidePanel) && (!xs)"
                 id="event-slider"
                 :class="{ 'outside-step': outsideStepWindow }"
                 :inert="outsideStepWindow"
