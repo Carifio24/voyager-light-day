@@ -95,7 +95,13 @@
                   title="Zoom in"
                   @click="zoomIn"
                 >
-                  +
+                  <!-- drawn, not "+" text: font glyphs sit below the middle of the line -->
+                  <svg
+                    viewBox="0 0 10 10"
+                    aria-hidden="true"
+                  >
+                    <path d="M0 5H10M5 0V10" />
+                  </svg>
                 </button>
                 <input
                   type="range"
@@ -114,7 +120,12 @@
                   title="Zoom out"
                   @click="zoomOut"
                 >
-                  −
+                  <svg
+                    viewBox="0 0 10 10"
+                    aria-hidden="true"
+                  >
+                    <path d="M0 5H10" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -1233,12 +1244,19 @@ body {
     color: var(--accent-color);
     width: 20px;
     height: 20px;
-    font-size: 1rem;
-    line-height: 1;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     user-select: none;
+
+    // about the size and weight the Verdana +/− had
+    svg {
+      width: 10px;
+      height: 10px;
+      stroke: currentColor;
+      stroke-width: 1.3;
+    }
   }
 }
 
