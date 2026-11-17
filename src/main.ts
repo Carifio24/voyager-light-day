@@ -11,7 +11,6 @@ import { wwtPinia } from "@wwtelescope/engine-pinia";
 import { library } from "@fortawesome/fontawesome-svg-core";
 import { FontAwesomeIcon } from "@fortawesome/vue-fontawesome";
 import {
-  faBookOpen,
   faTimes,
   faQuestion,
   faSliders,
@@ -25,7 +24,6 @@ import {
   faAlarmClock,
 } from "@fortawesome/free-solid-svg-icons";
 
-library.add(faBookOpen);
 library.add(faTimes);
 library.add(faQuestion);
 library.add(faSliders);

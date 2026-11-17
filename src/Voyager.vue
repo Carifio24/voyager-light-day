@@ -87,16 +87,15 @@
             <div id="left-buttons">
               <icon-button
                 v-if="!showTour"
-                class="sheet-toggle learn-more-button"
-                :model-value="showTextSheet && infoSheetTab === 'information'"
-                icon="book-open"
-                aria-label="Learn More"
+                v-model="showTour"
+                class="sheet-toggle tour-button"
+                icon="signs-post"
+                aria-label="Show Tour"
                 :color="accentColor"
                 :focus-color="accentColor"
-                tooltip-text="Learn More"
+                tooltip-text="Show Tour"
                 tooltip-location="start"
                 size="1x"
-                @activate="() => toggleInfoSheetTab('information')"
               />
               <icon-button
                 v-if="!showTour"
@@ -110,18 +109,6 @@
                 tooltip-location="start"
                 size="1x"
                 @activate="() => toggleInfoSheetTab('user-guide')"
-              />
-              <icon-button
-                v-if="!showTour"
-                v-model="showTour"
-                class="sheet-toggle tour-button"
-                icon="signs-post"
-                aria-label="Show Tour"
-                :color="accentColor"
-                :focus-color="accentColor"
-                tooltip-text="Show Tour"
-                tooltip-location="start"
-                size="1x"
               />
               <!-- zoom, as in artemis-ii: top of the slider is zoomed in -->
               <div id="zoom-controls">
@@ -309,38 +296,45 @@
                 hide-time
               />
             </div>
-            <!-- the countdown opens above its button, mirroring #frame-controls below the controls button -->
-            <div id="countdown-control">
-              <icon-button
-                v-model="showCountdown"
-                class="sheet-toggle"
-                :icon="showCountdown ? 'xmark' : 'alarm-clock'"
-                :aria-label="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
-                :color="accentColor"
-                :focus-color="accentColor"
-                :tooltip-text="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
-                tooltip-location="start"
-                size="1x"
-              />
-              <div
-                v-if="showCountdown"
-                id="countdown-panel"
-              >
-                <LightDayCountdown
-                  v-slot="{ time, past }"
-                  :target="ONE_LIGHT_DAY"
+            <!-- the countdown opens above its button, mirroring #frame-controls below the controls button.
+                 On small screens it'd push the time controls off center, so it moves up under the controls button -->
+            <Teleport
+              to="#right-buttons"
+              :disabled="!smallSize"
+              defer
+            >
+              <div id="countdown-control">
+                <icon-button
+                  v-model="showCountdown"
+                  class="sheet-toggle"
+                  :icon="showCountdown ? 'xmark' : 'alarm-clock'"
+                  :aria-label="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
+                  :color="accentColor"
+                  :focus-color="accentColor"
+                  :tooltip-text="showCountdown ? 'Hide countdown' : 'Countdown to one light-day'"
+                  tooltip-location="start"
+                  size="1x"
+                />
+                <div
+                  v-if="showCountdown"
+                  id="countdown-panel"
                 >
-                  <template v-if="past">
-                    Voyager 1 reached one light-day from Earth
-                    <span class="light-day-countdown">{{ time }}</span> ago
-                  </template>
-                  <template v-else>
-                    Voyager 1 will reach one light-day from Earth in
-                    <span class="light-day-countdown">{{ time }}</span>
-                  </template>
-                </LightDayCountdown>
+                  <LightDayCountdown
+                    v-slot="{ time, past }"
+                    :target="ONE_LIGHT_DAY"
+                  >
+                    <template v-if="past">
+                      Voyager 1 reached one light-day from Earth
+                      <span class="light-day-countdown">{{ time }}</span> ago
+                    </template>
+                    <template v-else>
+                      Voyager 1 will reach one light-day from Earth in
+                      <span class="light-day-countdown">{{ time }}</span>
+                    </template>
+                  </LightDayCountdown>
+                </div>
               </div>
-            </div>
+            </Teleport>
           </div>
 
           <!-- credit logos $logo-credits.cds-bottom-credits -->
@@ -356,7 +350,7 @@
     </v-main>
 
     <!--
-    This contains the informational content that is displayed when the book icon is clicked.
+    This contains the tour and the user guide.
     It's an in-flow flex sibling of #main-content, so opening it shrinks the WWT view
     (from the side normally, from the bottom on small screens) instead of covering it.
   -->
@@ -401,12 +395,6 @@
             :pds-url="step.event.pdsUrl"
             :opus-url="step.event.opusUrl"
             @close="showTour = false"
-            @go-to-view="
-              () => {
-                timePlaying = false;
-                if (step.event.view) goToView(step.event.view);
-              }
-            "
           >
             <p
               v-for="(paragraph, i) in step.text"
@@ -440,14 +428,6 @@
         align-tabs="start"
         @close="showTextSheet = false"
       >
-        <!-- tab-page content is wrapped in a .tab-page class  -->
-        <tab-page title="Information">
-          <!-- everything inside the tab-page is wrapped in a div with class "tab-page" -->
-          <!-- we generally use heading level 3 (the same level as the tabs) -->
-          <h3>Science Information</h3>
-          <p>Sample Science Information</p>
-        </tab-page>
-
         <!-- the user guide is an <TabPage title="User Guide" value="user-guide>...</TabPage>"
          it can be userful to move complex content into a separate component
          -->
@@ -598,6 +578,9 @@ const splash = urlState.get("splash")?.toLowerCase() !== "false";
 const showSplashScreen = ref(splash);
 const showControls = ref(false);
 const showCountdown = ref(false);
+// on small screens both open below the top-right buttons, in the same place: one at a time
+watch(showControls, (open) => open && smallSize.value && (showCountdown.value = false));
+watch(showCountdown, (open) => open && smallSize.value && (showControls.value = false));
 
 const showWebGL2Warning = ref(false);
 
@@ -1446,7 +1429,7 @@ mutuallyExclusive(showTour, showTextSheet, showUserGuideSheet);
 // itself. Its class lands on the tooltip too, hence `button.`.
 const drawerOpenerClass = computed(() => {
   if (showTour.value) return "tour-button";
-  if (showTextSheet.value) return infoSheetTab.value === "user-guide" ? "user-guide-button" : "learn-more-button";
+  if (showTextSheet.value) return "user-guide-button"; // the text sheet's only tab
   return null;
 });
 watch(drawerOpenerClass, (now, before) => {
@@ -1661,6 +1644,12 @@ body {
 #countdown-panel {
   bottom: calc(100% + 10px);
   text-align: center;
+}
+
+// small screens: the button's at the top right (teleported), so the panel opens below it, like #frame-controls
+.app-is-small #countdown-panel {
+  bottom: auto;
+  top: calc(100% + 10px);
 }
 
 #frame-controls {
@@ -1943,6 +1932,10 @@ body {
    and sit close together when there isn't. */
 .tour-sheet .tour-dots .v-breadcrumbs-divider {
   display: none;
+}
+
+.tour-sheet .tour-text-controls .tour-dots button.tour-dot-active {
+  color: hsl(233deg 90% 72%);
 }
 
 /* Even touching, the dots don't fit between Back and Next in a narrow box (the
