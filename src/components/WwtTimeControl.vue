@@ -36,7 +36,7 @@
         ref="speedControlRef"
         v-model="playing"
         class="wwt-speed-control"
-        :class="{'no-rate-controls': hideRateChangers}"
+        :class="{'no-rate-controls': hideRateChangers, 'hide-reverse': hideReverse}"
         :store="store"
         :default-rate="1000"
         :max-speed="100000000"
@@ -96,6 +96,8 @@ defineProps<{
   color?: string;
   /** hide the rate changers */
   hideRateChangers?: boolean;
+  /** hide reverse */
+  hideReverse?: boolean;
 }>();
 
 // whether time is running. v-model so the parent can pause it (e.g. when scrubbing)
@@ -230,12 +232,15 @@ fieldset#wwt-time-control {
   }
 }
 
-.wwt-speed-control.no-rate-controls #speed-buttons {
+.wwt-speed-control.hide-reverse #speed-buttons {
 
   > .icon-wrapper:first-child {
     display: none;
   }
-  
+}
+
+.wwt-speed-control.no-rate-controls #speed-buttons {
+
   > #slow-down.icon-wrapper {
     display: none;
   }

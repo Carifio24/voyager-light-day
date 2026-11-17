@@ -285,7 +285,7 @@
                 hide-set-time
                 hide-status
                 :color="accentColor"
-                :hide-rate-changers="showTour"
+                hide-rate-changers
               />
               <!-- the whole mission, log in time since launch -->
               <MissionTimeSlider
