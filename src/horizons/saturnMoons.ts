@@ -18,7 +18,7 @@ type EngineStore = ReturnType<typeof engineStore>;
 
 const SATURN = SolarSystemObjects.saturn;
 const TITAN_COLOR = "#ffa000";
-const MIRANDA_COLOR = "#a7fafa";
+const MIRANDA_COLOR = "#dccfff";
 const DAY_MS = 86400000;
 
 interface MoonDefinition {

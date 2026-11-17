@@ -732,7 +732,7 @@ function applyTrack(target: TrackTarget) {
 }
 watch(trackingCenter, applyTrack);
 const VOYAGER_2_COLOR = "#00ffff";
-const VOYAGER_1_COLOR = "#ffff00";
+const VOYAGER_1_COLOR = "#ffda8a"; 
 let voyager1Line: TrajectoryLine | null = null;
 let voyager2Line: TrajectoryLine | null = null;
 const showV1 = ref(true);
