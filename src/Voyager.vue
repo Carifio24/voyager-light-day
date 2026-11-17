@@ -35,6 +35,8 @@
 
     <v-main>
       <div id="main-content">
+        <WorldWideTelescope :wwt-namespace="wwtNamespace"></WorldWideTelescope>
+        <!-- should go after <world-wide-telescope /> -->
         <wwt-tracked-content
           :store="store"
           :position="voyager1Location"
@@ -62,8 +64,6 @@
             <strong>Voyager 2</strong>
           </p>
         </wwt-tracked-content>
-
-        <WorldWideTelescope :wwt-namespace="wwtNamespace"></WorldWideTelescope>
         <wwt-loader v-model="isLoading" />
 
         <!-- This block contains the elements (e.g. icon buttons displayed at/near the top of the screen) -->
