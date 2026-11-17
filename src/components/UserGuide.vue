@@ -1,8 +1,13 @@
 <!-- The User Guide page content. Wrap in TabPage to show it as a tab in TabbedSheet. -->
 <template>
   <div class="d-flex flex-column fill-height user-guide">
-    This app is powered by <easyLink href="https://worldwidetelescope.org/home">WorldWide Telescope</easyLink>
-    <h4 class="user-guide-header mt-2">Sky Navigation</h4>
+    <p class="mb-3">
+      This Cosmic Data Story is a companion to a <easyLink href="https://www.mos.org/events/beyond-telescope-voyager-1s-journey-one-light-day">presentation</easyLink> given at the Museum of Science's Charles Hayden Planetarium by John Lewis and Pat Udomprasert, in collaboration with Caity Sullivan and Dani LeBlanc.
+    </p>
+    <p>
+      This resource is powered by <easyLink href="https://worldwidetelescope.org/home">WorldWide Telescope</easyLink>.
+    </p>
+    <h4 class="user-guide-header mt-5 mb-2">Sky Navigation</h4>
     <p>To navigate the WWT view, use the following controls:</p>
     <v-row
       align-content="center"

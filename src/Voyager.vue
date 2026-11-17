@@ -436,7 +436,7 @@
          it can be userful to move complex content into a separate component
          -->
         <tab-page
-          title="User Guide"
+          title="App Info"
           value="user-guide"
         >
           <user-guide @change-privacy-settings="showPrivacyPolicyInfo = true" />
