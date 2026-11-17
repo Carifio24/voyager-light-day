@@ -280,10 +280,12 @@
               <wwt-time-control
                 v-model="timePlaying"
                 v-model:rate="playbackRate"
+                v-model:reverse="playbackReversed"
                 hide-time-input
                 hide-set-time
                 hide-status
                 :color="accentColor"
+                hide-rate-changers
               />
               <!-- the whole mission, log in time since launch -->
               <MissionTimeSlider
@@ -292,7 +294,6 @@
                 :start="voyagerSpan.start"
                 :end="voyagerSpan.end"
                 :step-ms="SLIDER_STEP_MS"
-                :log-scale-days="100"
                 hide-time
                 @mousedown="missionSliderUses.increment()"
               />
@@ -373,7 +374,7 @@
       tag="aside"
       aria-label="Information"
       :location="sidePanel ? 'start' : 'bottom'"
-      :width="sidePanel ? drawerWidth : undefined"
+      :width="sidePanel ? drawerWidth : drawerHeight"
       :mobile-breakpoint="0"
       :class="sidePanel ? 'drawer-side' : 'drawer-bottom'"
       :temporary="false"
@@ -543,6 +544,7 @@
         v-model:show="showDataCollectionOptOut"
         v-model:show-privacy-policy="showPrivacyPolicyInfo"
         v-model:response-opt-out="responseOptOut"
+        :order="sidePanel ? 0 : -1"
       />
     </v-slide-y-transition>
   </v-app>
@@ -617,9 +619,11 @@ function toggleInfoSheetTab(tabValue: string) {
 
 // styles //
 import { useAppLayout } from "./composables/useAppLayout";
-const { smallSize, sidePanel, viewportWidth } = useAppLayout();
+const { smallSize, sidePanel, viewportWidth, viewportHeight } = useAppLayout();
 const DRAWER_WIDTH_FRACTION = 34; // 34% of the viewport width
 const drawerWidth = computed(() => Math.round((viewportWidth.value * DRAWER_WIDTH_FRACTION) / 100));
+const DRAWER_HEIGHT_FRACTION = 40;
+const drawerHeight = computed(() => Math.round((viewportHeight.value * DRAWER_HEIGHT_FRACTION) / 100));
 
 import { useTheme, useDisplay } from "vuetify";
 const theme = useTheme();
@@ -638,7 +642,7 @@ const cssVars = computed(() => {
     "--accent-color": accentColor.value,
     "--accent-color-2": accentColor2.value,
     "--drawer-width": `${DRAWER_WIDTH_FRACTION}vw`,
-    "--drawer-bottom-height": "40vh",
+    "--drawer-bottom-height": `${DRAWER_HEIGHT_FRACTION}svh`, // svh: never taller than the drawerHeight px vuetify reserves, URL bar or not
   } as StyleValue;
 });
 
@@ -988,12 +992,27 @@ function updateVoyagerLightTime(time: Date) {
 }
 
 const timePlaying = ref(false);
-const playbackRate = ref(1000); // 1000x real time
+const playbackSpeed = ref(1000); // 1000x real time
+const playbackReversed = ref(false); // the speed control's reverse button
+// what the controls show: the speed, negative when reversed. Setting it sets the speed; only the reverse button flips it
+const playbackRate = computed({
+  get: () => (playbackReversed.value ? -1 : 1) * playbackSpeed.value,
+  set: (rate: number) => {
+    playbackSpeed.value = Math.abs(rate);
+  },
+});
 
 /** playback past the end of the timeline loops back to launch and keeps playing */
 function loopAtEnd() {
   if (timePlaying.value && SpaceTimeController.get_now() > voyagerSpan.end) {
     store.setTime(VOYAGER_1_EVENTS[0].date);
+  }
+}
+
+function stopAtStart() {
+  if (timePlaying.value && SpaceTimeController.get_now() <= voyagerSpan.start) {
+    timePlaying.value = false;
+    store.setTime(new Date(voyagerSpan.start.getTime() + 1000));
   }
 }
 
@@ -1035,6 +1054,7 @@ function setUpVoyagerScene() {
     voyager1Location.value = voyager1PositionAt(time);
     voyager2Location.value = voyager2PositionAt(time);
     loopAtEnd();
+    stopAtStart();
   });
   useThreeModel(store, glbUrl, renderThree, (model) => (voyager1Model = model));
   useThreeModel(store, glbUrl, renderThree, (model) => (voyager2Model = model));
@@ -1097,6 +1117,9 @@ watch(responseOptOut, (newVal) => {
     gtagConsent.value = true;
   } else if (newVal === true) {
     gtagConsent.value = false;
+  }
+  if (newVal !== null) { // answered: the footer's Allow / Opt Out don't close it themselves
+    showDataCollectionOptOut.value = false;
   }
 });
 
@@ -1214,8 +1237,11 @@ function eventRate(event: MissionEvent): number {
   return event.rate ?? INTERSTITIAL_RATE;
 }
 
-/** the window `time` is in, or else the next one. undefined after the last */
-function getCurrentOrNextWindow(time: Date): TimeRange | undefined {
+/** the window `time` is in, or else the next one in the direction of play. undefined past the last */
+function getCurrentOrNextWindow(time: Date, backward: boolean): TimeRange | undefined {
+  if (backward) {
+    return [...WINDOWS].reverse().find((window) => time >= window.start);
+  }
   return WINDOWS.find((window) => time <= window.end);
 }
 
@@ -1238,8 +1264,8 @@ function rateRamp(time: Date, target: Date, slowRate: number, fastRate: number):
 /**
  * get the playback rate for a given time.
  */
-function playbackRateAt(time: Date): number {
-  const window = getCurrentOrNextWindow(time);
+function playbackRateAt(time: Date, backward = false): number {
+  const window = getCurrentOrNextWindow(time, backward);
 
   if (!window) {
     return INTERSTITIAL_RATE;
@@ -1247,15 +1273,17 @@ function playbackRateAt(time: Date): number {
 
   // what events are in this window.
   const events = getEventsInWindow(window);
+  
+  const speedMultiplier = (showTour.value ? 1 : 2);
 
   // get the highest valid rate
-  const fastestRateInWindow = Math.max(...events.map(eventRate));
-  // if before a window, ease in.
-  if (time < window.start) {
-    return rateRamp(time, window.start, fastestRateInWindow, INTERSTITIAL_RATE);
+  const fastestRateInWindow = Math.max(...events.map(eventRate)) * speedMultiplier;
+  // if before a window (after it, going backward), ease in.
+  if (backward ? time > window.end : time < window.start) {
+    return rateRamp(time, backward ? window.end : window.start, fastestRateInWindow, INTERSTITIAL_RATE);
   }
   // each event can have it's own rate, we should be at the slowest one.
-  const eventRatesForTime = events.map((e) => rateRamp(time, e.date, eventRate(e), fastestRateInWindow));
+  const eventRatesForTime = events.map((e) => rateRamp(time, e.date, eventRate(e) * speedMultiplier, fastestRateInWindow));
   return Math.min(...eventRatesForTime);
 }
 
@@ -1293,9 +1321,16 @@ function followEventsWhilePlaying() {
   }
   updateSecondsPerFrame();
   const now = SpaceTimeController.get_now();
-  setClockRate(playbackRateAt(now));
 
-  const step = eventForTime(VOYAGER_1_EVENTS, now); // a mission event, not a tour step
+  const backward = playbackReversed.value;
+  setClockRate((backward ? -1 : 1) * playbackRateAt(now, backward));
+  
+  const step = eventForTime(VOYAGER_1_EVENTS, now);
+
+  // if not in tour - don't do tour things
+  if (!showTour.value) {
+    return;
+  }
   if (step !== undefined && step + INTRO_STEPS !== tour.stepIndex.value) {
     tour.goToStep(step + INTRO_STEPS, true);
   }
@@ -1980,5 +2015,42 @@ body {
   background-color: rgb(var(--v-theme-cosmicds-blue));
   border-radius: 10px;
   padding: 0.25em 0.75em;
+}
+
+.app-is-small #wwt-overlay {
+  padding-inline: 0.5rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.25rem;
+}
+
+// short views (e.g. the bottom drawer plus the opt-out footer): the zoom slider gives up height so #bottom-content isn't pushed under the drawer
+.app-is-small #top-content {
+  min-height: 0;
+}
+
+.app-is-small #left-buttons {
+  max-height: 100%;
+}
+
+.app-is-small #zoom-controls {
+  padding-top: 0;
+  gap: 0.25rem;
+  min-height: 0;
+
+  .zoom-slider {
+    flex: 0 1 120px;
+    min-height: 40px;
+  }
+}
+
+// a slimmer opt-out footer: tighter padding, Allow/Opt Out side by side
+#app.app-is-small .v-footer.privacy-footer {
+  padding: 4px 8px;
+  gap: 0.5rem;
+  line-height: 1.3;
+
+  .privacy-footer-buttons {
+    flex-wrap: nowrap;
+  }
 }
 </style>

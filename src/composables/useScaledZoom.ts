@@ -37,7 +37,6 @@ export function useScaledZoom() {
     const clamped = Math.min(Math.max(zoom, zoomMin.value), zoomMax.value);
     control.renderContext.targetCamera.zoom = clamped;
     control.renderContext.viewCamera.zoom = clamped;
-    control.renderOneFrame();
     return clamped;
   }
 
