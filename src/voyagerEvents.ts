@@ -24,7 +24,7 @@ export interface MissionEvent {
   caption: string;
   date: Date;
   image: string;
-  imageUrl: string;
+  imageUrl?: string;
   pdsUrl?: string;
   opusUrl?: string;
   credit: string;
