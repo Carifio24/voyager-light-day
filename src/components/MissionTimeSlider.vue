@@ -17,7 +17,10 @@
       @update:model-value="(f: number) => setTime(toTime(f))"
     />
     <span class="mission-time-end">{{ endLabel(end) }}</span>
-    <span class="mission-time-now">{{ label ?? nowLabel }}</span>
+    <span
+      v-if="!hideTime"
+      class="mission-time-now"
+    >{{ label ?? nowLabel }}</span>
   </div>
 </template>
 
@@ -36,6 +39,8 @@ const props = defineProps<{
   logScaleDays?: number;
   /** shown instead of the current time */
   label?: string;
+  /** leave out the current time (when the page shows it elsewhere) */
+  hideTime?: boolean;
 }>();
 
 const store = engineStore();
