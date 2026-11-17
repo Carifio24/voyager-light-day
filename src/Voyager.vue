@@ -316,6 +316,7 @@
             :opus-url="step.event.opusUrl"
             @close="showTour = false"
             @go-to-view="() => {
+              timePlaying = false;
               if (step.event.view) goToView(step.event.view);
             }"
           >
@@ -1054,13 +1055,33 @@ function playbackRateAt(time: Date): number {
   return Math.min(...eventRatesForTime);
 }
 
-/** the camera on the Voyager the story is about, backing out to the whole solar system at the Pale Blue Dot */
+function isVoyager(track: TrackTarget): boolean {
+  return track === "voyager1" || track === "voyager2";
+}
+
+
+function voyagerAt(time: Date): TrackTarget {
+  return time > V1_SATURN_ENCOUNTER.end && time < V2_NEPTUNE_ENCOUNTER.end ? "voyager2" : "voyager1";
+}
+
+
+// for the pale blue dot - if we're following voyager, keep following voyager. 
+// if on a step but and not following voyager, track that steps track
+// otherwise if we were in wide-views then stay in wide view, otherwise follow voyager.
 function setCameraForStep(step: number | undefined, time: Date) {
-  if (step === PALE_BLUE_DOT) {
+  
+  const followingVoyager = isVoyager(trackingCenter.value);
+  // stay wide after the Pale Blue Dot if we went to it via the tour (which sets the tracking center to the sun)
+  const stayWide = time > VOYAGER_1_EVENTS[PALE_BLUE_DOT].date && trackingCenter.value === WIDE_VIEW.track;
+  
+  
+  if (step === PALE_BLUE_DOT && followingVoyager) {
     goToView({ ...WIDE_VIEW, time: time.toISOString() });
-  } else if (time < VOYAGER_1_EVENTS[PALE_BLUE_DOT].date) { // after it, stay wide
-    // Voyager 2 from the end of Voyager 1's Saturn encounter to the end of its own at Neptune
-    trackingCenter.value = time > V1_SATURN_ENCOUNTER.end && time < V2_NEPTUNE_ENCOUNTER.end ? "voyager2" : "voyager1";
+  } else if (step !== undefined && !followingVoyager) {
+    const event = VOYAGER_1_EVENTS[step];
+    trackingCenter.value = event.view?.track ?? event.track ?? trackingCenter.value;
+  } else if (!stayWide) {
+    trackingCenter.value = voyagerAt(time);
   }
 }
 
@@ -1094,6 +1115,7 @@ watch(timePlaying, (playing) => {
 // tour.next(), which in the toolkit is an unbounded stepIndex += 1, so the sheet
 // gets a copy of the tour whose next() closes it there instead of stepping past
 // the end. Same refs, so the step stays in sync with `tour`.
+// Changing the step by hand pauses playback, so the step's view (time and camera) applies and stays.
 const onLastStep = computed(() => tour.stepIndex.value === tour.length - 1);
 const tourSheetTour = {
   ...tour,
@@ -1102,8 +1124,17 @@ const tourSheetTour = {
       tourFinished = true;
       showTour.value = false;
     } else {
+      timePlaying.value = false;
       await tour.next();
     }
+  },
+  previous: async () => {
+    timePlaying.value = false;
+    await tour.previous();
+  },
+  goToStep: async (step: number, force?: boolean) => {
+    timePlaying.value = false;
+    await tour.goToStep(step, force);
   },
 };
 
