@@ -395,12 +395,6 @@
             :pds-url="step.event.pdsUrl"
             :opus-url="step.event.opusUrl"
             @close="showTour = false"
-            @go-to-view="
-              () => {
-                timePlaying = false;
-                if (step.event.view) goToView(step.event.view);
-              }
-            "
           >
             <p
               v-for="(paragraph, i) in step.text"
