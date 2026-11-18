@@ -300,6 +300,7 @@
                 :step-ms="SLIDER_STEP_MS"
                 color="tour-accent"
                 hide-time
+                @mousedown="missionSliderUses.increment()"
               />
             </div>
             <!-- the countdown opens above its button, mirroring #frame-controls below the controls button.
@@ -512,7 +513,6 @@
 
     <!-- rating prompt, shown once a while after load (see useUserExperienceRating) -->
     <UserExperienceDialog
-      v-if="false"
       :show-rating="showRatingDialog"
       :question="question"
       @dismiss="dismissRating"
@@ -1150,11 +1150,14 @@ const {
   optOut: optOutRating,
   updateUserExperienceInfo,
   initializePrompt,
-} = useUserExperienceRating(STORY_NAME, userID, {
+} = useUserExperienceRating({
+  storyPrefix: STORY_NAME,
+  uuid: userID,
+  apiKey: import.meta.env.VITE_CDS_API_KEY ?? "",
   responseOptOut,
   timeout: 30_000, // lets not use it for now,
   questions: ["How do you like this app?"],
-  mixin: false,
+  mixin: true,
 });
 
 // rating's timeout runs independently of the splash/privacy dialogs, so gate its visibility on both being done first
@@ -1296,7 +1299,7 @@ function playbackRateAt(time: Date, backward = false): number {
 
   // what events are in this window.
   const events = getEventsInWindow(window);
-  
+
   const speedMultiplier = (showTour.value ? 1 : 1);
 
   // get the highest valid rate
