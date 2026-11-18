@@ -512,6 +512,7 @@
 
     <!-- rating prompt, shown once a while after load (see useUserExperienceRating) -->
     <UserExperienceDialog
+      v-if="false"
       :show-rating="showRatingDialog"
       :question="question"
       @dismiss="dismissRating"
