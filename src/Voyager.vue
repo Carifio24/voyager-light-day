@@ -513,7 +513,6 @@
 
     <!-- rating prompt, shown once a while after load (see useUserExperienceRating) -->
     <UserExperienceDialog
-      v-if="false"
       :show-rating="showRatingDialog"
       :question="question"
       @dismiss="dismissRating"
@@ -1151,11 +1150,14 @@ const {
   optOut: optOutRating,
   updateUserExperienceInfo,
   initializePrompt,
-} = useUserExperienceRating(STORY_NAME, userID, {
+} = useUserExperienceRating({
+  storyPrefix: STORY_NAME,
+  uuid: userID,
+  apiKey: import.meta.env.VITE_CDS_API_KEY ?? "",
   responseOptOut,
   timeout: 30_000, // lets not use it for now,
   questions: ["How do you like this app?"],
-  mixin: false,
+  mixin: true,
 });
 
 // rating's timeout runs independently of the splash/privacy dialogs, so gate its visibility on both being done first
