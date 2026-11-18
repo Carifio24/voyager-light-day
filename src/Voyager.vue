@@ -300,6 +300,7 @@
                 :step-ms="SLIDER_STEP_MS"
                 color="tour-accent"
                 hide-time
+                @mousedown="missionSliderUses.increment()"
               />
             </div>
             <!-- the countdown opens above its button, mirroring #frame-controls below the controls button.
@@ -1296,7 +1297,7 @@ function playbackRateAt(time: Date, backward = false): number {
 
   // what events are in this window.
   const events = getEventsInWindow(window);
-  
+
   const speedMultiplier = (showTour.value ? 1 : 1);
 
   // get the highest valid rate
