@@ -1155,7 +1155,7 @@ const {
   uuid: userID,
   apiKey: import.meta.env.VITE_CDS_API_KEY ?? "",
   responseOptOut,
-  timeout: 30_000, // lets not use it for now,
+  timeout: 45_000, 
   questions: ["How do you like this app?"],
   mixin: true,
 });
